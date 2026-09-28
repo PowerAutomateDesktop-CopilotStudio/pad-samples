@@ -23,6 +23,16 @@ samples/<what-it-does-in-kebab-case>/
 5. Open a pull request. The check runs `tools/build_docs.py --check`: every input and output needs a description,
    every file in `flow/` a line under `subflows:`.
 
+The website is built from the same pages, nothing to write twice. To see it on your PC before the pull request:
+
+```text
+pip install -r tools/requirements-site.txt
+python tools/build_site.py
+python -m http.server 8797 --directory site
+```
+
+Then open `http://localhost:8797`. After the merge, the workflow `site` publishes it on GitHub Pages.
+
 ## Rules
 
 - **Tested**: the flow ran on your PC, the `tested:` line says on which PAD version.
