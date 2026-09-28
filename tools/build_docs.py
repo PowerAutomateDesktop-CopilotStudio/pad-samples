@@ -357,9 +357,10 @@ def sample_readme(folder: Path, card: dict):
     md += ["## Tested on", "", "| PAD version | Date | Result |", "|---|---|---|"]
     md += [f"| {t['pad']} | {t['date']} | {'✅ pass' if t['result'] == 'pass' else '❌ ' + t['result']} |" for t in card["tested"]]
     md += ["", "## In this folder", "", "```text"]
-    for p in sorted(folder.rglob("*")):
-        if p.is_file() and p.name != "README.md":
-            md.append(str(p.relative_to(folder)).replace("\\", "/"))
+    # the same order on Windows and Linux: the CI must rebuild exactly the page written on the author's PC
+    for rel in sorted((p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file() and p.name != "README.md"),
+                      key=str.lower):
+        md.append(rel)
     md += ["```", "", f"Tags: {' '.join('`' + t + '`' for t in card.get('tags', []))} · Authors: {', '.join(card.get('authors', []))}", ""]
     return "\n".join(md), errors, {"subflows": len(required), "vars": n_in + n_out, "ui": len(ui), "manual": len(manual)}
 
@@ -403,7 +404,7 @@ def gallery(entries):
 def main():
     check = "--check" in sys.argv
     entries, failed = [], False
-    for card_path in sorted((ROOT / "samples").glob("*/sample.yml")):
+    for card_path in sorted((ROOT / "samples").glob("*/sample.yml"), key=lambda p: p.parent.name.lower()):
         folder = card_path.parent
         card = yaml.safe_load(card_path.read_text(encoding="utf-8"))
         text, errors, stats = sample_readme(folder, card)

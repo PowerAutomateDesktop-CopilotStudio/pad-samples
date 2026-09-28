@@ -47,7 +47,7 @@ def main():
     dist.mkdir(exist_ok=True)
     name = f"{sample_id}-v{version}"
     zip_path = dist / f"{name}.zip"
-    files = sorted(p for p in folder.rglob("*") if p.is_file())
+    files = sorted((p for p in folder.rglob("*") if p.is_file()), key=lambda p: p.relative_to(folder).as_posix().lower())
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         for p in files:
             z.write(p, f"{sample_id}/{p.relative_to(folder).as_posix()}")
