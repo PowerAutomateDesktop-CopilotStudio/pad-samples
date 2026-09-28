@@ -1,0 +1,321 @@
+# local subflow: Convert_Excel_To_Html
+# inputs: in_loc_txt_WorkbookPath, in_loc_txt_SheetName, in_loc_txt_RangeAddress
+# outputs: out_loc_txt_Html, out_loc_bool_Ok, out_loc_txt_Error, out_loc_txt_SheetName, out_loc_txt_RangeAddress, out_loc_num_RowCount, out_loc_num_ColumnCount, out_loc_num_ElapsedMs
+# Turns one Excel range into an HTML table that keeps the look of Excel, with inline CSS only (Outlook desktop, web, mobile).
+# in_loc_txt_SheetName empty = the sheet active when the workbook was saved; in_loc_txt_RangeAddress empty = the used range.
+# Never throws: out_loc_bool_Ok False and out_loc_txt_Error say what went wrong (workbook missing, sheet or range unknown, Excel absent).
+# Excel publishes the range with its own HTML exporter; the script copies the CSS classes inline, drops the mso-* rules, the hidden
+# rows and columns, encodes every non-ASCII character as an entity, and reports the details on the first line of its output.
+@@regionColor: '#57FFE1'
+**REGION 1. Outputs initialised: every path leaves them defined
+SET out_loc_txt_Html TO $''''''
+SET out_loc_bool_Ok TO False
+SET out_loc_txt_Error TO $''''''
+SET out_loc_txt_SheetName TO in_loc_txt_SheetName
+SET out_loc_txt_RangeAddress TO in_loc_txt_RangeAddress
+SET out_loc_num_RowCount TO 0
+SET out_loc_num_ColumnCount TO 0
+SET out_loc_num_ElapsedMs TO 0
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 2. Precondition: a missing workbook is reported, never thrown
+IF (File.IfFile.DoesNotExist File: in_loc_txt_WorkbookPath) THEN
+    SET out_loc_txt_Error TO $'''Workbook not found: %in_loc_txt_WorkbookPath%'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 3. Convert: Excel publishes the range, the script inlines the CSS; the first line of the output carries the details
+Scripting.RunPowershellScript.RunScript Script: $'''# excel-to-html.ps1 - turns an Excel range into an HTML table that keeps the look of Excel and survives Outlook.
+# How: Excel itself publishes the range as HTML (PublishObjects, its \'Save as web page\' engine: one call, a few
+# hundred milliseconds whatever the size), then this script rewrites that HTML for email: the CSS classes of the
+# <style> block are copied INLINE on every cell (Outlook on the web, mobile and Gmail drop most <style> rules),
+# the mso-* rules, hidden rows and hidden columns are removed, the table is rebuilt clean, every non-ASCII
+# character becomes a numeric entity so that encodings never matter.
+# Kept: fills, fonts (name, size, colour, bold, italic, underline, strikethrough, rich text runs), alignment, wrap,
+#        indent, borders, merged cells, column widths, row heights, number formats, conditional formatting, hyperlinks.
+# Not kept: images, charts, shapes, icon sets, data bars, comments (no HTML equivalent in an email).
+# Standalone: powershell -File excel-to-html.ps1 -WorkbookPath X.xlsx [-SheetName S] [-RangeAddress A1:H20] [-OutputPath out.html] [-DetailsLine yes]
+#              -DetailsLine yes: the first line of the output carries the details, tab-separated :
+#              excel-to-html <TAB> sheet <TAB> range <TAB> rows <TAB> columns <TAB> milliseconds; the table follows.
+# In PAD    : tools\\build-flow.ps1 replaces the param block by variable-driven assignments and pastes this text into
+#              Test.robin (no details line) and Convert_Excel_To_Html.robin (details line, split by the function).
+# ASCII only on purpose: the same text lives inside a Robin literal and inside a PowerShell action.
+# --- parameters : the inputs of the local function Convert_Excel_To_Html ---
+$WorkbookPath = \'%in_loc_txt_WorkbookPath%\'
+$SheetName = \'%in_loc_txt_SheetName%\'
+$RangeAddress = \'%in_loc_txt_RangeAddress%\'
+$OutputPath = \'\'
+$DetailsLine = \'yes\'
+# --- end parameters ---
+$ErrorActionPreference = \'Stop\'
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
+
+function Split-Declarations([string]$block) {
+    # \'color:black; mso-number-format:\"0\\.0%%\"; border:.5pt solid #BFBFBF\' -> ordered map, quote-aware, mso-* dropped
+    $map = New-Object System.Collections.Specialized.OrderedDictionary
+    if ([string]::IsNullOrEmpty($block)) { return $map }
+    $parts = New-Object System.Collections.ArrayList
+    $sb = New-Object System.Text.StringBuilder
+    $inQuote = $false
+    foreach ($ch in $block.ToCharArray()) {
+        if ($ch -eq \'\"\') { $inQuote = -not $inQuote }
+        if ($ch -eq \';\' -and -not $inQuote) { [void]$parts.Add($sb.ToString()); [void]$sb.Clear() } else { [void]$sb.Append($ch) }
+    }
+    [void]$parts.Add($sb.ToString())
+    foreach ($p in $parts) {
+        $idx = $p.IndexOf(\':\')
+        if ($idx -lt 1) { continue }
+        $k = $p.Substring(0, $idx).Trim().ToLowerInvariant()
+        $v = $p.Substring($idx + 1).Trim()
+        if ($k -eq \'\' -or $v -eq \'\' -or $k.StartsWith(\'mso-\')) { continue }
+        $map[$k] = $v
+    }
+    return $map
+}
+
+function Merge-Into($target, $source) {
+    if ($source -ne $null) { foreach ($k in @($source.Keys)) { $target[$k] = $source[$k] } }
+}
+
+function Parse-Attributes([string]$attrText) {
+    # class=xl65 width=103 style=\'height:15.0pt\' x:num=\"182500\" -> hashtable (names lower-cased)
+    $map = @{}
+    $pattern = \'([A-Za-z][\\w:-]*)\\s*=\\s*(?:\"([^\"]*)\"|\' + \"\'([^\']*)\'\" + \'|([^\\s>]+))\'
+    foreach ($m in [regex]::Matches($attrText, $pattern)) {
+        $name = $m.Groups[1].Value.ToLowerInvariant()
+        $val = $m.Groups[2].Value
+        if ($m.Groups[3].Success) { $val = $m.Groups[3].Value }
+        if ($m.Groups[4].Success) { $val = $m.Groups[4].Value }
+        $map[$name] = $val
+    }
+    return $map
+}
+
+function Inline-Style($rules, [hashtable]$attrs, [string]$tag) {
+    # tag rule, then the class rules, then the inline style: the later wins, like the cascade did
+    $style = New-Object System.Collections.Specialized.OrderedDictionary
+    if ($rules.ContainsKey($tag)) { Merge-Into $style $rules[$tag] }
+    if ($attrs.ContainsKey(\'class\')) {
+        foreach ($cls in ($attrs[\'class\'] -split \'\\s+\')) {
+            $key = \'.\' + $cls
+            if ($rules.ContainsKey($key)) { Merge-Into $style $rules[$key] }
+        }
+    }
+    if ($attrs.ContainsKey(\'style\')) { Merge-Into $style (Split-Declarations $attrs[\'style\']) }
+    $out = New-Object System.Text.StringBuilder
+    foreach ($k in @($style.Keys)) {
+        $v = [string]$style[$k]
+        if ($k -eq \'text-align\' -and $v -eq \'general\') { continue }
+        if ($k -eq \'display\') { continue }
+        $v = $v.Replace(\'windowtext\', \'#000000\').Replace(\'\"\', \"\'\")
+        [void]$out.Append($k + \':\' + $v + \';\')
+    }
+    return $out.ToString()
+}
+
+function Inline-Content($rules, [string]$inner) {
+    # rich text runs (<font class=font5>), spans and links inside a cell get their style inline too
+    $sbEval = {
+        param($m)
+        $tag = $m.Groups[1].Value.ToLowerInvariant()
+        $a = Parse-Attributes $m.Groups[2].Value
+        $style = Inline-Style $rules $a $tag
+        $keep = \'\'
+        if ($a.ContainsKey(\'href\')) { $keep += \' href=\"\' + $a[\'href\'] + \'\"\' }
+        if ($tag -eq \'font\') { $tag = \'span\' }
+        if ($style -ne \'\') { return (\'<\' + $tag + $keep + \' style=\"\' + $style + \'\">\') }
+        return (\'<\' + $tag + $keep + \'>\')
+    }.GetNewClosure()
+    $evaluator = [System.Text.RegularExpressions.MatchEvaluator]$sbEval
+    $s = [regex]::Replace($inner, \'(?is)<(font|span|a)\\b([^>]*)>\', $evaluator)
+    $s = [regex]::Replace($s, \'(?i)</font>\', \'</span>\')
+    $s = [regex]::Replace($s, \'\\s*\\r?\\n\\s*\', \' \')
+    return $s.Trim()
+}
+
+function Encode-NonAscii([string]$s) {
+    $sb = New-Object System.Text.StringBuilder
+    $i = 0
+    while ($i -lt $s.Length) {
+        $ch = $s[$i]
+        if ([char]::IsHighSurrogate($ch) -and ($i + 1) -lt $s.Length) {
+            [void]$sb.Append(\'&#\' + [char]::ConvertToUtf32($s, $i) + \';\')
+            $i += 2
+            continue
+        }
+        $code = [int]$ch
+        if ($code -gt 126) { [void]$sb.Append(\'&#\' + $code + \';\') } else { [void]$sb.Append($ch) }
+        $i++
+    }
+    return $sb.ToString()
+}
+
+$excel = $null
+$wb = $null
+$tmp = \'\'
+try {
+    if (-not (Test-Path -LiteralPath $WorkbookPath)) { throw (\'Workbook not found: \' + $WorkbookPath) }
+
+    # 1. Excel publishes the range: its own exporter, one call, conditional formatting and number formats resolved
+    $excel = New-Object -ComObject Excel.Application
+    $excel.Visible = $false
+    $excel.DisplayAlerts = $false
+    $wb = $excel.Workbooks.Open($WorkbookPath, 0, $true)
+    if ($SheetName -ne \'\') {
+        try { $ws = $wb.Worksheets.Item($SheetName) } catch { throw (\'Worksheet not found: \' + $SheetName) }
+    } else { $ws = $wb.ActiveSheet }
+    if ($RangeAddress -ne \'\') {
+        try { $rng = $ws.Range($RangeAddress) } catch { throw (\'Range not valid: \' + $RangeAddress) }
+    } else { $rng = $ws.UsedRange }
+    $address = [string]$rng.Address($false, $false)
+    $sheetUsed = [string]$ws.Name
+    $base = \'excel-to-html-\' + [guid]::NewGuid().ToString(\'N\')
+    $tmp = Join-Path $env:TEMP ($base + \'.htm\')
+    $po = $wb.PublishObjects.Add(4, $tmp, $ws.Name, $address, 0, \'ExcelToOutlook\', \'\')
+    $po.Publish($true)
+    $wb.Close($false)
+    $wb = $null
+    $bytes = [System.IO.File]::ReadAllBytes($tmp)
+    $head = [System.Text.Encoding]::ASCII.GetString($bytes, 0, [Math]::Min(4096, $bytes.Length))
+    $encoding = [System.Text.Encoding]::GetEncoding(1252)
+    if ($head -match \'(?i)charset=([\\w-]+)\') { try { $encoding = [System.Text.Encoding]::GetEncoding($Matches[1]) } catch { } }
+    $html = $encoding.GetString($bytes)
+
+    # 2. The CSS rules of the <style> block, selector by selector (td, .xl65 ...), mso-* already dropped
+    $rules = @{}
+    $mStyle = [regex]::Match($html, \'(?is)<style[^>]*>(.*?)</style>\')
+    if ($mStyle.Success) {
+        $styleBlock = $mStyle.Groups[1].Value.Replace(\'<!--\', \' \').Replace(\'-->\', \' \')
+        foreach ($m in [regex]::Matches($styleBlock, \'(?s)([^{}]+)\\{([^{}]*)\\}\')) {
+            $decl = Split-Declarations $m.Groups[2].Value
+            foreach ($sel in ($m.Groups[1].Value -split \',\')) {
+                $s = $sel.Trim()
+                if ($s -eq \'\') { continue }
+                if (-not $rules.ContainsKey($s)) { $rules[$s] = New-Object System.Collections.Specialized.OrderedDictionary }
+                Merge-Into $rules[$s] $decl
+            }
+        }
+    }
+
+    # 3. The table alone, without the Office conditional comments
+    $mTable = [regex]::Match($html, \'(?is)<table\\b[^>]*>.*?</table>\')
+    if (-not $mTable.Success) { throw \'Excel produced no table for this range\' }
+    $table = $mTable.Value
+    $table = [regex]::Replace($table, \'(?is)<!\\[if\\s+supportMisalignedColumns\\]>.*?<!\\[endif\\]>\', \'\')
+    $table = [regex]::Replace($table, \'(?s)<!--.*?-->\', \'\')
+    $table = [regex]::Replace($table, \'(?s)<!\\[(?:if|endif)[^\\]]*\\]>\', \'\')
+
+    # 4. Columns: width and hidden state (Excel writes a hidden column as width=0 / display:none)
+    $colHidden = New-Object System.Collections.ArrayList
+    $colWidth = New-Object System.Collections.ArrayList
+    foreach ($m in [regex]::Matches($table, \'(?i)<col\\b([^>]*)>\')) {
+        $a = Parse-Attributes $m.Groups[1].Value
+        $span = 1
+        if ($a.ContainsKey(\'span\')) { $span = [int]$a[\'span\'] }
+        $w = 0
+        if ($a.ContainsKey(\'width\')) { $w = [int]$a[\'width\'] }
+        $hidden = ($w -le 0) -or ($a.ContainsKey(\'style\') -and $a[\'style\'] -match \'display\\s*:\\s*none\')
+        for ($i = 0; $i -lt $span; $i++) { [void]$colHidden.Add($hidden); [void]$colWidth.Add($w) }
+    }
+    $totalWidth = 0
+    $colVisible = 0
+    for ($i = 0; $i -lt $colWidth.Count; $i++) { if (-not $colHidden[$i]) { $totalWidth += $colWidth[$i]; $colVisible++ } }
+    $rowCount = 0
+
+    # 5. Rows and cells: classes inlined, hidden rows and columns skipped, spans kept
+    $out = New-Object System.Text.StringBuilder
+    [void]$out.Append(\'<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\" width=\"\' + $totalWidth + \'\" style=\"border-collapse:collapse;table-layout:fixed;width:\' + $totalWidth + \'px;mso-table-lspace:0pt;mso-table-rspace:0pt;\">\')
+    for ($i = 0; $i -lt $colWidth.Count; $i++) { if (-not $colHidden[$i]) { [void]$out.Append(\'<col width=\"\' + $colWidth[$i] + \'\">\') } }
+    [void]$out.AppendLine()
+    $rowspanLeft = New-Object int[] 1024
+    foreach ($mr in [regex]::Matches($table, \'(?is)<tr\\b([^>]*)>(.*?)</tr>\')) {
+        $ra = Parse-Attributes $mr.Groups[1].Value
+        $rowHidden = ($ra.ContainsKey(\'style\') -and $ra[\'style\'] -match \'display\\s*:\\s*none\')
+        $rowStyle = \'\'
+        if ($ra.ContainsKey(\'style\')) {
+            $rd = Split-Declarations $ra[\'style\']
+            if ($rd.Contains(\'height\')) { $rowStyle = \'height:\' + $rd[\'height\'] + \';\' }
+        }
+        $rowAttrs = \'\'
+        if ($ra.ContainsKey(\'height\')) { $rowAttrs = \' height=\"\' + $ra[\'height\'] + \'\"\' }
+        $pos = 0
+        $cells = New-Object System.Text.StringBuilder
+        foreach ($mc in [regex]::Matches($mr.Groups[2].Value, \'(?is)<td\\b([^>]*)>(.*?)</td>\')) {
+            while ($pos -lt $rowspanLeft.Length -and $rowspanLeft[$pos] -gt 0) { $pos++ }
+            $ca = Parse-Attributes $mc.Groups[1].Value
+            $colspan = 1
+            if ($ca.ContainsKey(\'colspan\')) { $colspan = [int]$ca[\'colspan\'] }
+            $rowspan = 1
+            if ($ca.ContainsKey(\'rowspan\')) { $rowspan = [int]$ca[\'rowspan\'] }
+            $visible = 0
+            $wsum = 0
+            for ($i = $pos; $i -lt ($pos + $colspan); $i++) {
+                if ($i -lt $colHidden.Count) { if (-not $colHidden[$i]) { $visible++; $wsum += $colWidth[$i] } } else { $visible++ }
+            }
+            if ($rowspan -gt 1) { for ($i = $pos; $i -lt ($pos + $colspan) -and $i -lt $rowspanLeft.Length; $i++) { $rowspanLeft[$i] = $rowspan } }
+            $pos += $colspan
+            if ($visible -eq 0 -or $rowHidden) { continue }
+            $attrText = \'\'
+            if ($visible -gt 1) { $attrText += \' colspan=\"\' + $visible + \'\"\' }
+            if ($rowspan -gt 1) { $attrText += \' rowspan=\"\' + $rowspan + \'\"\' }
+            if ($wsum -gt 0) { $attrText += \' width=\"\' + $wsum + \'\"\' }
+            if ($ca.ContainsKey(\'height\')) { $attrText += \' height=\"\' + $ca[\'height\'] + \'\"\' }
+            if ($ca.ContainsKey(\'align\')) { $attrText += \' align=\"\' + $ca[\'align\'] + \'\"\' }
+            if ($ca.ContainsKey(\'valign\')) { $attrText += \' valign=\"\' + $ca[\'valign\'] + \'\"\' }
+            $style = Inline-Style $rules $ca \'td\'
+            $content = Inline-Content $rules $mc.Groups[2].Value
+            if ($content -eq \'\') { $content = \'&nbsp;\' }
+            [void]$cells.Append(\'<td\' + $attrText + \' style=\"\' + $style + \'\">\' + $content + \'</td>\')
+        }
+        for ($i = 0; $i -lt $rowspanLeft.Length; $i++) { if ($rowspanLeft[$i] -gt 0) { $rowspanLeft[$i]-- } }
+        if ($rowHidden) { continue }
+        [void]$out.Append(\'<tr\' + $rowAttrs + \' style=\"\' + $rowStyle + \'\">\' + $cells.ToString() + \'</tr>\')
+        [void]$out.AppendLine()
+        $rowCount++
+    }
+    [void]$out.Append(\'</table>\')
+    $result = Encode-NonAscii $out.ToString()
+    if ($OutputPath -ne \'\') { [System.IO.File]::WriteAllText($OutputPath, $result, [System.Text.Encoding]::ASCII) }
+    if ($DetailsLine -ne \'\') {
+        $tab = [string][char]9
+        Write-Output (\'excel-to-html\' + $tab + $sheetUsed + $tab + $address + $tab + $rowCount + $tab + $colVisible + $tab + $clock.ElapsedMilliseconds)
+    }
+    Write-Output $result
+}
+catch {
+    [Console]::Error.WriteLine(\'excel-to-html : \' + $_.Exception.Message)
+}
+finally {
+    if ($wb -ne $null) { $wb.Close($false) }
+    if ($excel -ne $null) {
+        $excel.Quit()
+        [void][System.Runtime.InteropServices.Marshal]::ReleaseComObject($excel)
+    }
+    [GC]::Collect()
+    [GC]::WaitForPendingFinalizers()
+    if ($tmp -ne \'\' -and (Test-Path -LiteralPath $tmp)) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
+    if ($tmp -ne \'\') {
+        $stem = [System.IO.Path]::GetFileNameWithoutExtension($tmp)
+        Get-ChildItem -LiteralPath $env:TEMP -Directory -Filter ($stem + \'_*\') -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}''' ScriptOutput=> txt_ScriptOutput ScriptError=> txt_ScriptError
+# The action never fails by itself: a script error only fills ScriptError
+IF txt_ScriptError <> $'''''' THEN
+    Text.Trim Text: txt_ScriptError TrimOption: Text.TrimOption.Both TrimmedText=> out_loc_txt_Error
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 4. Outputs: the details line (tab-separated: name, sheet, range, rows, columns, milliseconds), then the HTML table
+Text.ParseText.RegexParseForFirstOccurrence Text: txt_ScriptOutput TextToFind: $'''^[^\\r\\n]*''' StartingPosition: 0 IgnoreCase: False Match=> txt_DetailsLine OccurrencePosition=> _num_DetailsPosition
+Text.SplitText.Split Text: txt_DetailsLine StandardDelimiter: Text.StandardDelimiter.Tab DelimiterTimes: 1 Result=> lst_Details
+Text.Replace.ReplaceTextWithRegex Text: txt_ScriptOutput TextToFind: $'''^[^\\r\\n]*\\r?\\n''' ReplaceWith: $'''''' IgnoreCase: False ActivateEscapeSequences: False Result=> txt_Html
+Text.Trim Text: txt_Html TrimOption: Text.TrimOption.Both TrimmedText=> out_loc_txt_Html
+SET out_loc_txt_SheetName TO lst_Details[1]
+SET out_loc_txt_RangeAddress TO lst_Details[2]
+Text.ToNumber Text: lst_Details[3] Number=> out_loc_num_RowCount
+Text.ToNumber Text: lst_Details[4] Number=> out_loc_num_ColumnCount
+Text.ToNumber Text: lst_Details[5] Number=> out_loc_num_ElapsedMs
+SET out_loc_bool_Ok TO True
+**ENDREGION

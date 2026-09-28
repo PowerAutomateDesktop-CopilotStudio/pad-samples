@@ -1,0 +1,76 @@
+# The card of this sample. tools/build_docs.py turns it into README.md and checks it against the files in flow/.
+# Everything that can be read from the code (subflows, contract, UI elements, line counts, settings) is NOT repeated here.
+id: excel-range-to-html-table
+version: 1.0.0             # x.y.z : see CONTRIBUTING, section Versions
+title: Excel range to an email-ready HTML table
+summary: Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready to paste into an Outlook email.
+category: Excel
+kind: component            # flow = one job end to end ; component = a reusable local function + an example call
+level: intermediate        # beginner | intermediate | advanced
+minutes: 15
+tags: [excel, html, outlook, local-function, powershell]
+authors: [HyperAutomatisation]
+
+the_job: |
+  Every quarter the sales report must reach the managers **as it looks in Excel**: colours, red variances, totals line.
+  Copying the range into an email loses half of it, and a screenshot cannot be searched or copied.
+  This sample reads the formatting from Excel itself and writes an HTML table with inline styles, the only kind every Outlook keeps.
+
+pictures:
+  before: {file: assets/before.png, caption: "The range in Excel: Q3 Sales, A1:H19"}
+  result: {file: assets/result.png, caption: "The HTML table produced by the flow, same look"}
+  variables_pane: {file: assets/variables-pane.png, caption: "The function's Variables pane, section Local, once the contract is created: Input 3, Output 8"}
+  canvas:
+    2-Convert_Excel_To_Html.txt: {file: assets/canvas.png, caption: "The top of the function after the paste"}
+    1-Main.txt: {file: assets/canvas-main.png, caption: "Main after the paste: 4 values, 1 call, guards, output"}
+
+apps: [Microsoft Excel (desktop), Microsoft Outlook (desktop) for the quick demo only]
+
+files:
+  - put: input/Sales_Report_2026-Q3.xlsx
+    into: C:\Reports\Sales
+    note: Create the folder first. The flow creates C:\Reports\Sales\Email by itself.
+
+quick_try:
+  file: 3-Test.txt
+  says: One block, nothing to create. It converts the range and opens an Outlook draft with the table in the body.
+
+flow_name: Excel to HTML
+
+subflows:
+  1-Main.txt: {does: "Sets the workbook, sheet, range and output folder, calls the function, writes the HTML file."}
+  2-Convert_Excel_To_Html.txt: {does: "The reusable part: 3 values in, the HTML table and 7 details out. Never stops the flow: it returns a flag and a message."}
+  3-Test.txt: {does: "The quick demo above, kept as a subflow so you can run it again at any time.", optional: true}
+
+variables:
+  in_loc_txt_WorkbookPath: {holds: Full path of the workbook, e.g: 'C:\Reports\Sales\Sales_Report_2026-Q3.xlsx'}
+  in_loc_txt_SheetName: {holds: "Sheet to read; empty = the sheet active when the workbook was saved", e.g: Q3 Sales}
+  in_loc_txt_RangeAddress: {holds: "Range to read; empty = the used range", e.g: 'A1:H19'}
+  out_loc_txt_Html: {holds: The HTML table with inline styles, e.g: '<table style="border-collapse:collapse;...'}
+  out_loc_bool_Ok: {holds: True when the conversion worked, e.g: 'True'}
+  out_loc_txt_Error: {holds: "Why it failed, empty when out_loc_bool_Ok is True", e.g: 'Workbook not found: C:\Reports\Sales\Q3.xlsx'}
+  out_loc_txt_SheetName: {holds: The sheet really read, e.g: Q3 Sales}
+  out_loc_txt_RangeAddress: {holds: The range really read, e.g: 'A1:H19'}
+  out_loc_num_RowCount: {holds: Visible rows in the table, e.g: '18'}
+  out_loc_num_ColumnCount: {holds: Visible columns in the table, e.g: '7'}
+  out_loc_num_ElapsedMs: {holds: Time taken by the conversion, e.g: '8550'}
+
+run:
+  subflow: Main
+  expect:
+    - "A message: sheet, range, rows x columns, time, and the path of the HTML file."
+    - "The file C:\\Reports\\Sales\\Email\\Sales_Report_2026-Q3_table.html, identical to expected/Sales_Report_2026-Q3_table.html."
+  picture: {file: assets/message.png, caption: The message at the end of the run}
+
+troubleshooting:
+  - when: The Errors pane lists unknown variables after the paste into the function.
+    do: A contract name differs from the table of step 3. Fix the name in the Variables pane (capitals count), the errors disappear.
+  - when: The new subflow appears under Global, not Local.
+    do: The scope is easily lost while typing the name. Delete the subflow and create it again, check Local just before Save.
+  - when: Before the paste, the function shows warnings about outputs never set.
+    do: Normal. They disappear once the code of step 4 is pasted.
+  - when: 'The message says "Conversion failed: Worksheet not found: ..." or "Range not valid: ...".'
+    do: The sheet name must match the tab in Excel exactly, and the range must be an address such as A1:H19. Fix the SET lines of Main.
+
+tested:
+  - {pad: 2.72.183, date: 2026-09-26, result: pass}

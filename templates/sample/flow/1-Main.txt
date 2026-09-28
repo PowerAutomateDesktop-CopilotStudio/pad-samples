@@ -1,0 +1,4 @@
+@@regionColor: '#57FFE1'
+**REGION 1. Settings
+SET txt_WorkFolder TO $'''C:\Work\Example'''
+**ENDREGION

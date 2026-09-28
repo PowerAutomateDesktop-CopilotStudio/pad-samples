@@ -1,0 +1,38 @@
+# subflow: Main (global)
+# Excel to Outlook - example call of the local function Convert_Excel_To_Html: the Excel information goes in
+# (workbook, sheet, range), the HTML table and its details come out (flag, error, sheet and range used, rows, columns, time).
+# Main shows the reusable way: call the function, test its flag, use its outputs. The one-block demo that ends in an
+# Outlook draft is the global subflow Test, autonomous: run it alone with 'Run from here' on its first action.
+# Regions: cyan = the values to change, purple = the processing, red = the guards, gold = the output.
+@@regionColor: '#57FFE1'
+**REGION 1. Variables: example inputs of the function, output folder
+# Any .xlsx / .xlsm; the sheet by name (empty = the sheet active when the workbook was saved); the range in Excel notation (empty = the used range)
+SET txt_WorkbookPath TO $'''C:\\Reports\\Sales\\Sales_Report_2026-Q3.xlsx'''
+SET txt_SheetName TO $'''Q3 Sales'''
+SET txt_RangeAddress TO $'''A1:H19'''
+SET txt_OutputFolder TO $'''C:\\Reports\\Sales\\Email'''
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 2. Call the function: Excel information in, HTML table and details out
+CALL Convert_Excel_To_Html in_loc_txt_WorkbookPath: txt_WorkbookPath in_loc_txt_SheetName: txt_SheetName in_loc_txt_RangeAddress: txt_RangeAddress out_loc_txt_Html=> txt_Html out_loc_bool_Ok=> bool_Ok out_loc_txt_Error=> txt_Error out_loc_txt_SheetName=> txt_UsedSheetName out_loc_txt_RangeAddress=> txt_UsedRangeAddress out_loc_num_RowCount=> num_RowCount out_loc_num_ColumnCount=> num_ColumnCount out_loc_num_ElapsedMs=> num_ElapsedMs
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 3. Guards: the function never throws, it returns a flag and a message; the output folder is created when missing
+IF bool_Ok = False THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Excel to Outlook''' Message: $'''Conversion failed: %txt_Error%''' Icon: Display.Icon.ErrorIcon Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+    EXIT Code: 1
+END
+IF (Folder.IfFolderExists.DoesNotExist Path: txt_OutputFolder) THEN
+    # Create folder needs an existing parent: split the path into parent + name first
+    File.GetPathPart File: txt_OutputFolder Directory=> fold_OutputParent FileName=> txt_OutputFolderName
+    Folder.Create FolderPath: fold_OutputParent FolderName: txt_OutputFolderName Folder=> _fold_Output
+END
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 4. Output: the HTML table in a file, the details on screen
+File.GetPathPart File: txt_WorkbookPath FileNameWithoutExtension=> txt_WorkbookBaseName
+SET txt_HtmlFile TO $'''%txt_OutputFolder%\\%txt_WorkbookBaseName%_table.html'''
+File.WriteText File: txt_HtmlFile TextToWrite: txt_Html AppendNewLine: False IfFileExists: File.IfFileExists.Overwrite Encoding: File.FileEncoding.UTF8
+SET num_HtmlLength TO txt_Html.Length
+Display.ShowMessageDialog.ShowMessage Title: $'''Excel to Outlook''' Message: $'''Sheet %txt_UsedSheetName%, range %txt_UsedRangeAddress%: %num_RowCount% rows x %num_ColumnCount% columns converted in %num_ElapsedMs% ms. HTML table of %num_HtmlLength% characters written to %txt_HtmlFile%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+**ENDREGION

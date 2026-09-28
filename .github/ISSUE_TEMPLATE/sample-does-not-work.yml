@@ -1,0 +1,28 @@
+name: This sample does not work
+description: The paste or the run of a sample fails on your PC.
+labels: [help]
+body:
+  - type: input
+    id: sample
+    attributes: {label: Sample, description: "The folder name, e.g. index-invoice-files-by-name"}
+    validations: {required: true}
+  - type: input
+    id: pad
+    attributes: {label: PAD version, description: "Help › About in Power Automate Desktop, e.g. 2.72.183"}
+    validations: {required: true}
+  - type: dropdown
+    id: when
+    attributes:
+      label: When does it fail?
+      options: [After the paste (Errors pane), During the run, The result differs from the sample]
+    validations: {required: true}
+  - type: textarea
+    id: error
+    attributes: {label: The error text, description: "Copy it from the Errors pane or the message. Remove any personal data."}
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you post
+      options:
+        - label: I created the subflows and the input/output variables listed by the sample
+        - label: I did the manual steps of the sample (if any)

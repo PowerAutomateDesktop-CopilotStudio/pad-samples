@@ -1,0 +1,25 @@
+name: release a sample
+# A tag <sample id>-v<x.y.z> (for example excel-range-to-html-table-v1.0.0) publishes that sample alone:
+# the folder as a zip attached to a GitHub release, the notes taken from its CHANGELOG.md.
+on:
+  push:
+    tags: ['*-v[0-9]+.[0-9]+.[0-9]+']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install pyyaml
+      - name: The pages and the cards agree with the code
+        run: python tools/build_docs.py --check
+      - name: Zip the sample and write the notes
+        id: zip
+        run: python tools/release_sample.py "$GITHUB_REF_NAME"
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "${{ steps.zip.outputs.zip }}" --title "${{ steps.zip.outputs.title }}" --notes-file "${{ steps.zip.outputs.notes }}"

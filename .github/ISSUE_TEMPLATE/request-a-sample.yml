@@ -1,0 +1,11 @@
+name: Request a sample
+description: A task you do by hand and would like to see as a sample.
+labels: [sample request]
+body:
+  - type: textarea
+    id: job
+    attributes: {label: The job, description: "What you do today, step by step, and how often."}
+    validations: {required: true}
+  - type: input
+    id: apps
+    attributes: {label: Apps involved, description: "e.g. Excel, Outlook, a web portal, a desktop ERP"}

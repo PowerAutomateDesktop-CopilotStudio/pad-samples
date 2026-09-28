@@ -1,0 +1,57 @@
+# The card of this sample. tools/build_docs.py turns it into README.md and checks it against the files in flow/.
+id: what-it-does-in-kebab-case         # = the folder name
+version: 1.0.0                         # x.y.z, see CONTRIBUTING, section Versions
+title: What it does, in a few words
+summary: One sentence a manager understands.
+category: Excel                        # Excel | Files & text | PDF | Web | Desktop apps | Email | ...
+kind: flow                             # flow = one job end to end ; component = a reusable local function + an example call
+level: beginner                        # beginner | intermediate | advanced
+minutes: 10                            # time for a beginner, from zero to a successful run
+tags: []
+authors: [Your name]
+
+the_job: |
+  Two or three lines: who does what by hand today, and what the flow does instead.
+
+pictures:
+  result: {file: assets/result.png, caption: "What the reader gets"}           # required
+  # before: {file: assets/before.png, caption: "..."}
+  # variables_pane: {file: assets/variables-pane.png, caption: "..."}
+  # canvas:
+  #   1-Main.txt: {file: assets/canvas.png, caption: "Main after the paste"}
+
+apps: []                               # e.g. [Microsoft Excel (desktop)]
+
+files:
+  - put: input/example.xlsx
+    into: C:\Work\Example
+    note: Create the folder first.
+
+# quick_try: {file: 3-Test.txt, says: "One block, nothing to create."}
+
+flow_name: The name the reader gives the flow in PAD
+
+subflows:                              # one line per file of flow/
+  1-Main.txt: {does: "The whole job, top to bottom."}   # quote any text that holds a comma
+
+variables:                             # every input and output: what it holds and a real example
+  # in_loc_txt_Path: {holds: Full path of the file, e.g: 'C:\Work\Example\example.xlsx'}
+  # in_glob_txt_Folder: {holds: ..., e.g: ..., default: 'C:\Work\Example'}
+
+# manual_steps:
+#   - title: Mark the password variable as sensitive
+#     why: The paste cannot carry this setting.
+#     how: In the Variables pane, right-click txt_Password, select Mark as sensitive.
+
+run:
+  subflow: Main
+  expect:
+    - What the reader sees at the end.
+  # show_file: expected/result.txt
+
+troubleshooting:
+  - when: What the reader sees
+    do: What to do
+
+tested:
+  - {pad: 2.72.183, date: 2026-01-31, result: pass}
