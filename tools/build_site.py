@@ -5,7 +5,7 @@
 Nothing is written twice: the gallery, the sample pages, Start here, the guides and CONTRIBUTING are the very files of the
 repository (tools/build_docs.py writes the sample pages). This script only:
   - copies them into site_src/ (README.md stays README.md: MkDocs makes it the index of its folder),
-  - adds to each sample page the front matter read from its sample.yml: description (search engines) and tags (the Tags page),
+  - adds to each sample page the front matter read from its sample.yml: the description (search engines),
   - lets MkDocs read the Markdown inside <details> blocks (the code of each subflow),
   - turns a link to a file that is not on the site (templates/, .github/ ...) into a link to the repository on GitHub,
   - writes the navigation (samples grouped by category) and runs 'mkdocs build --strict'.
@@ -29,37 +29,30 @@ SITE_CSS = """/* pad-samples site: small touches on top of Material */
 .md-typeset details { font-size: .78rem; }
 .md-typeset .md-typeset__table { width: 100%; }
 .md-typeset h1 { font-weight: 600; }
+/* a variable name is read and typed whole: never cut it */
+.md-typeset td:first-child code { white-space: nowrap; }
+/* long Robin lines wrap on screen; the copy button still copies each line as one line */
+.md-typeset pre > code { white-space: pre-wrap; word-break: break-word; }
 """
 
-TAGS_PAGE = """# Tags
-
-Every sample carries its category, its level and the apps it uses. Pick a tag to see the samples that have it.
-
-<!-- material/tags -->
-"""
 
 
 def copy_pages():
     if SRC.exists():
         shutil.rmtree(SRC)
     SRC.mkdir()
-    for name in ("README.md", "START-HERE.md", "CONTRIBUTING.md", "LICENSE"):
+    for name in ("README.md", "START-HERE.md", "TECHNIQUES.md", "CONTRIBUTING.md", "LICENSE"):
         shutil.copy2(ROOT / name, SRC / name)
     shutil.copytree(ROOT / "docs", SRC / "docs")
     shutil.copytree(ROOT / "samples", SRC / "samples")
     (SRC / "assets").mkdir()
     (SRC / "assets" / "site.css").write_text(SITE_CSS, encoding="utf-8")
-    (SRC / "tags.md").write_text(TAGS_PAGE, encoding="utf-8")
+
 
 
 def front_matter(card):
-    tags, seen = [], set()
-    for t in [card["category"], card["level"], card["kind"]] + list(card.get("tags", [])):
-        if str(t).lower() not in seen:   # 'Excel' (category) and 'excel' (tag) are one tag
-            seen.add(str(t).lower())
-            tags.append(str(t))
-    meta = {"description": card["summary"], "tags": tags}
-    return "---\n" + yaml.safe_dump(meta, sort_keys=False, allow_unicode=True) + "---\n\n"
+    """The description for search engines. Samples are grouped by technique (TECHNIQUES.md), not by tags."""
+    return "---\n" + yaml.safe_dump({"description": card["summary"]}, sort_keys=False, allow_unicode=True) + "---\n\n"
 
 
 def fix_links(md_path: Path, text: str) -> str:
@@ -70,7 +63,10 @@ def fix_links(md_path: Path, text: str) -> str:
             return m.group(0)
         path, _, anchor = target.partition("#")
         resolved = (md_path.parent / path).resolve()
-        if resolved.exists():
+        if resolved.is_file():   # a folder is not a page of the site: it opens on GitHub
+            # MkDocs serves X.md as X/index.html: it rewrites Markdown links, not the src / href of raw HTML
+            if m.group(4) and md_path.name != "README.md":
+                return f"{pre}../{target}{post}"
             return m.group(0)
         try:
             rel = (ROOT / md_path.parent.relative_to(SRC) / path).resolve().relative_to(ROOT).as_posix()
@@ -99,17 +95,19 @@ def prepare_markdown():
 def write_config(cards):
     by_category = {}
     for card, rel in cards:
-        by_category.setdefault(card["category"], []).append({card["title"]: rel})
+        pages = [{"Overview": rel}, {"Setup": rel.rsplit("/", 1)[0] + "/SETUP.md"}]
+        by_category.setdefault(card["category"], []).append({card["title"]: pages})
     nav = [
         {"Samples": [{"Gallery": "README.md"}] + [{cat: sorted(items, key=lambda d: list(d)[0])} for cat, items in sorted(by_category.items())]},
-        {"Start here": "START-HERE.md"},
-        {"How-to guides": [
+        {"Techniques": "TECHNIQUES.md"},
+        {"How it is organised": "START-HERE.md"},
+        {"PAD basics": [
             {"Create a subflow": "docs/create-a-subflow.md"},
             {"Create input and output variables": "docs/create-variables.md"},
             {"Sensitive values": "docs/sensitive-values.md"},
             {"Troubleshooting a paste": "docs/troubleshooting.md"},
         ]},
-        {"Tags": "tags.md"},
+
         {"Contribute": "CONTRIBUTING.md"},
     ]
     config = ROOT / ".site.yml"

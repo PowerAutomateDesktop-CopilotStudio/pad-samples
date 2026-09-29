@@ -2,7 +2,7 @@
 
 # Share a sample
 
-A sample is one folder. You write the card (`sample.yml`) and the code; the tool writes the page.
+A sample is one folder. You write the card (`sample.yml`) and the code; the tool writes the two pages (`README.md`, `SETUP.md`).
 
 ```text
 samples/<what-it-does-in-kebab-case>/
@@ -18,10 +18,14 @@ samples/<what-it-does-in-kebab-case>/
 
 1. Copy [`templates/sample`](templates/sample) and rename the folder.
 2. In PAD, select all of each subflow (**Ctrl+A**, **Ctrl+C**), paste into its file in `flow/`.
-3. Fill `sample.yml`. What the code already says (subflows, contract, UI elements, line counts) is **not** typed in the card.
-4. `python tools/build_docs.py` writes `README.md`. Read it as a beginner would.
+3. Fill `sample.yml`: the problem, the solution, the techniques (ids of [`techniques.yml`](techniques.yml)), the design
+   choices you measured, the limits you know. What the code already says (subflows, contract, UI elements, line counts,
+   regions, the CALL line) is **not** typed in the card.
+4. `python tools/build_docs.py` writes `README.md` and `SETUP.md`. Read the overview as a senior consultant would
+   (can I decide in a minute?), the setup as a junior would (can I rebuild it without help?).
 5. Open a pull request. The check runs `tools/build_docs.py --check`: every input and output needs a description,
-   every file in `flow/` a line under `subflows:`.
+   every file in `flow/` a line under `subflows:`, every technique an entry in `techniques.yml`, the category an
+   entry in `categories.yml`. A new category or technique is added in its file, in the same pull request, with its summary.
 
 The website is built from the same pages, nothing to write twice. To see it on your PC before the pull request:
 
@@ -36,10 +40,15 @@ Then open `http://localhost:8797`. After the merge, the workflow `site` publishe
 ## Rules
 
 - **Tested**: the flow ran on your PC, the `tested:` line says on which PAD version.
-- **English** names, comments and texts; variables named as in [Start here](START-HERE.md#how-to-read-a-variable-name).
+- **English** names, comments and texts; variables named as in [Start here](START-HERE.md#conventions-in-the-code).
 - **No personal or company data**: no real names, e-mails, paths with your user name, tenants, passwords.
   Practice passwords only, for a practice app shipped with the sample.
 - **Regions** in the standard colours; settings in the first (cyan) region.
+- **Comments for the reader**: a comment in the flow explains what the flow does or why. Nothing about how the file was
+  produced (tools, generators, other files): the check warns about it.
+- **Limits stated**: what the sample does not do, and what was not tested, is written in `limits:`.
+- **The lightest path first**: a component ships a quick try (`quick_try:`), one block pasted into `Main` that asks
+  nothing (no subflow, no input or output variable) and needs as few apps as possible. The check refuses a component without it.
 
 ## Versions
 

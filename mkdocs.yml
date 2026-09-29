@@ -1,5 +1,5 @@
 # The GitHub Pages site. Its pages are the pages of the repository: tools/build_site.py copies them into site_src/,
-# adds the front matter read from each sample.yml (description, tags) and the navigation, then runs MkDocs.
+# adds the front matter read from each sample.yml (description) and the navigation, then runs MkDocs.
 # Do not edit site_src/ or site/: they are rebuilt on every run.
 site_name: Power Automate Desktop samples
 site_description: Ready-to-paste Power Automate Desktop flows for real office work. Each one ran on a real PC, with its sample files, the expected result and a step-by-step page.
@@ -38,7 +38,6 @@ theme:
 
 plugins:
   - search
-  - tags
 
 extra_css:
   - assets/site.css

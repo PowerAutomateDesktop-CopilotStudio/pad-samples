@@ -1,0 +1,44 @@
+# The techniques the samples show. A sample lists its techniques by id (techniques: in sample.yml);
+# tools/build_docs.py refuses an id that is not here and writes TECHNIQUES.md, the index by technique.
+# One technique = one reusable idea a consultant can carry to another flow. Keep the list short and precise.
+# label: 1 to 3 words for the gallery ; title: the heading of its section in TECHNIQUES.md ; summary: one or two sentences.
+
+local-function:
+  label: Local function
+  title: Local function with a contract
+  summary: A local subflow with declared inputs and outputs, called in one CALL line. Copy it into any flow, create its variables, call it.
+
+errors-as-outputs:
+  label: Errors as outputs
+  title: Errors returned, never thrown
+  summary: The subflow sets every output first, then reports a failure through a flag and a message. The caller decides what to do; the flow never stops inside a reusable part.
+
+powershell-script:
+  label: PowerShell action
+  title: One PowerShell action for what PAD cannot do
+  summary: A single Run PowerShell script action covers the missing capability; its inputs are PAD variables, its output is parsed back into variables.
+
+excel-com:
+  label: Excel COM
+  title: Excel driven through COM
+  summary: The script opens Excel hidden and read-only, and uses Excel's own engines (here the HTML publisher) instead of reading cell by cell.
+
+email-safe-html:
+  label: Email-safe HTML
+  title: Email-safe HTML
+  summary: Inline CSS on every cell (the styling email clients keep), no style block, hidden cells removed, non-ASCII characters as entities.
+
+outlook-draft:
+  label: Outlook draft
+  title: Outlook draft instead of a send
+  summary: The message is saved as a draft and opened on screen, so a person checks it before it leaves.
+
+text-parsing:
+  label: Text parsing
+  title: Parsing file names and text
+  summary: Split, replace and convert text to read structured values (references, dates) from names that follow several conventions.
+
+desktop-ui-automation:
+  label: Desktop UI automation
+  title: Desktop UI automation with stable selectors
+  summary: UI elements pasted with the code, selectors built on automation ids, a keyboard fallback where the screen resists.

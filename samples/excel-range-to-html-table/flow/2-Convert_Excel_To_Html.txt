@@ -26,7 +26,7 @@ END
 **ENDREGION
 @@regionColor: '#D9C3E9'
 **REGION 3. Convert: Excel publishes the range, the script inlines the CSS; the first line of the output carries the details
-Scripting.RunPowershellScript.RunScript Script: $'''# excel-to-html.ps1 - turns an Excel range into an HTML table that keeps the look of Excel and survives Outlook.
+Scripting.RunPowershellScript.RunScript Script: $'''# Excel to HTML - turns an Excel range into an HTML table that keeps the look of Excel and survives Outlook.
 # How: Excel itself publishes the range as HTML (PublishObjects, its \'Save as web page\' engine: one call, a few
 # hundred milliseconds whatever the size), then this script rewrites that HTML for email: the CSS classes of the
 # <style> block are copied INLINE on every cell (Outlook on the web, mobile and Gmail drop most <style> rules),
@@ -35,11 +35,8 @@ Scripting.RunPowershellScript.RunScript Script: $'''# excel-to-html.ps1 - turns 
 # Kept: fills, fonts (name, size, colour, bold, italic, underline, strikethrough, rich text runs), alignment, wrap,
 #        indent, borders, merged cells, column widths, row heights, number formats, conditional formatting, hyperlinks.
 # Not kept: images, charts, shapes, icon sets, data bars, comments (no HTML equivalent in an email).
-# Standalone: powershell -File excel-to-html.ps1 -WorkbookPath X.xlsx [-SheetName S] [-RangeAddress A1:H20] [-OutputPath out.html] [-DetailsLine yes]
-#              -DetailsLine yes: the first line of the output carries the details, tab-separated :
-#              excel-to-html <TAB> sheet <TAB> range <TAB> rows <TAB> columns <TAB> milliseconds; the table follows.
-# In PAD    : tools\\build-flow.ps1 replaces the param block by variable-driven assignments and pastes this text into
-#              Test.robin (no details line) and Convert_Excel_To_Html.robin (details line, split by the function).
+# Output: the first line carries the details, tab-separated:
+#         excel-to-html <TAB> sheet <TAB> range <TAB> rows <TAB> columns <TAB> milliseconds; the table follows.
 # ASCII only on purpose: the same text lives inside a Robin literal and inside a PowerShell action.
 # --- parameters : the inputs of the local function Convert_Excel_To_Html ---
 $WorkbookPath = \'%in_loc_txt_WorkbookPath%\'

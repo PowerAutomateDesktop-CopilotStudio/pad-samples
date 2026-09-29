@@ -26,4 +26,4 @@ Variables pane › **Global** › **+** › Input or Output. Fill **Variable nam
 
 ## Reading a name
 
-`in_loc_txt_WorkbookPath` = an **in**put, **loc**al to its subflow, of type **t**e**xt**. The full key is in [Start here](../START-HERE.md#how-to-read-a-variable-name).
+`in_loc_txt_WorkbookPath` = an **in**put, **loc**al to its subflow, of type **t**e**xt**. The full key is in [Start here](../START-HERE.md#conventions-in-the-code).

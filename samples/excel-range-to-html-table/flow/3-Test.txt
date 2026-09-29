@@ -1,12 +1,13 @@
 # subflow: Test (global)
-# Excel to Outlook - the one-block demo, AUTONOMOUS: any workbook range becomes an HTML table that keeps the look of Excel
-# (fills, fonts, borders, merged cells, column widths, number formats, conditional formatting, hyperlinks) and lands in an Outlook draft.
-# NO input / output variable: the parameters are plain SET lines in the first region, so that this subflow alone can be copied
-# from Test.robin and pasted into any empty Main. Run it alone with 'Run from here' on its first action.
+# Excel to HTML - the quick try, AUTONOMOUS: any workbook range becomes an HTML table that keeps the look of Excel
+# (fills, fonts, borders, merged cells, column widths, number formats, conditional formatting, hyperlinks). The table opens in the
+# browser; with bool_SendToOutlook = True it also lands in an Outlook draft (classic Outlook only).
+# NO input / output variable: the parameters are plain SET lines in the first region, so this subflow can be pasted alone
+# into any empty Main. Or run it here with 'Run from here' on its first action.
 # The reusable building block is the local function Convert_Excel_To_Html (same script), called by Main.
 # PAD has no action that reads the formatting of a cell: ONE 'Run PowerShell script' action asks Excel itself
 # (COM, DisplayFormat) and returns a table with inline CSS, the only styling that every Outlook client keeps.
-# Everything else is native: guards, HTML file, Outlook, final message. Regions: cyan values, red guards, purple processing, gold output.
+# Everything else is native: guards, HTML file, browser or Outlook, final message. Regions: cyan values, red guards, purple processing, gold output.
 @@regionColor: '#57FFE1'
 **REGION 1. Variables: parameters, the only lines to change
 # The workbook to send: any .xlsx / .xlsm, opened read-only, never modified
@@ -15,9 +16,11 @@ SET txt_WorkbookPath TO $'''C:\\Reports\\Sales\\Sales_Report_2026-Q3.xlsx'''
 SET txt_SheetName TO $''''''
 # Range to export in Excel notation (A1:H18); empty = the used range of the sheet
 SET txt_RangeAddress TO $''''''
-# Folder that receives the HTML copy of the email (a proof, and a preview in any browser)
+# Folder that receives the HTML file (it opens in your browser at the end)
 SET txt_OutputFolder TO $'''C:\\Reports\\Sales\\Email'''
-# Outlook account that sends (as listed in Outlook), recipients, subject, text above the table (HTML allowed)
+# False = only the HTML file, opened in the browser (needs Excel only); True = also an email through the classic Outlook
+SET bool_SendToOutlook TO False
+# Used when bool_SendToOutlook is True: Outlook account that sends (as listed in Outlook), recipients, subject, text above the table (HTML allowed)
 SET txt_OutlookAccount TO $'''your.name@example.com'''
 SET txt_EmailTo TO $'''sales-managers@example.com'''
 SET txt_EmailSubject TO $'''Sales report Q3 2026 - straight from Excel'''
@@ -39,8 +42,8 @@ END
 **ENDREGION
 @@regionColor: '#D9C3E9'
 **REGION 3. Convert: Excel renders the range, the script writes it as an HTML table with inline styles
-# The script is reusable as is (tools\excel-to-html.ps1): same text as in Convert_Excel_To_Html, parameters taken from the variables above
-Scripting.RunPowershellScript.RunScript Script: $'''# excel-to-html.ps1 - turns an Excel range into an HTML table that keeps the look of Excel and survives Outlook.
+# The same script as in Convert_Excel_To_Html, without the details line; its parameters come from the variables above
+Scripting.RunPowershellScript.RunScript Script: $'''# Excel to HTML - turns an Excel range into an HTML table that keeps the look of Excel and survives Outlook.
 # How: Excel itself publishes the range as HTML (PublishObjects, its \'Save as web page\' engine: one call, a few
 # hundred milliseconds whatever the size), then this script rewrites that HTML for email: the CSS classes of the
 # <style> block are copied INLINE on every cell (Outlook on the web, mobile and Gmail drop most <style> rules),
@@ -49,11 +52,6 @@ Scripting.RunPowershellScript.RunScript Script: $'''# excel-to-html.ps1 - turns 
 # Kept: fills, fonts (name, size, colour, bold, italic, underline, strikethrough, rich text runs), alignment, wrap,
 #        indent, borders, merged cells, column widths, row heights, number formats, conditional formatting, hyperlinks.
 # Not kept: images, charts, shapes, icon sets, data bars, comments (no HTML equivalent in an email).
-# Standalone: powershell -File excel-to-html.ps1 -WorkbookPath X.xlsx [-SheetName S] [-RangeAddress A1:H20] [-OutputPath out.html] [-DetailsLine yes]
-#              -DetailsLine yes: the first line of the output carries the details, tab-separated :
-#              excel-to-html <TAB> sheet <TAB> range <TAB> rows <TAB> columns <TAB> milliseconds; the table follows.
-# In PAD    : tools\\build-flow.ps1 replaces the param block by variable-driven assignments and pastes this text into
-#              Test.robin (no details line) and Convert_Excel_To_Html.robin (details line, split by the function).
 # ASCII only on purpose: the same text lives inside a Robin literal and inside a PowerShell action.
 # --- parameters : taken from the Variables region of Test ---
 $WorkbookPath = \'%txt_WorkbookPath%\'
@@ -325,27 +323,33 @@ IF txt_ScriptError <> $'''''' THEN
 END
 **ENDREGION
 @@regionColor: '#FFD966'
-**REGION 5. Output: compose the email, keep an HTML copy, hand it to Outlook
+**REGION 5. Output: the HTML file, and the email when Outlook is asked
 File.GetPathPart File: txt_WorkbookPath FileName=> txt_WorkbookName FileNameWithoutExtension=> txt_WorkbookBaseName
 SET txt_HtmlFile TO $'''%txt_OutputFolder%\\%txt_WorkbookBaseName%.html'''
 # Inline styles only: Outlook desktop, Outlook on the web and the mobile apps drop most <style> rules
 SET txt_EmailBody TO $'''<html><body style=\"font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000000;\"><p>%txt_EmailIntro%</p>%txt_HtmlTable%<p style=\"font-size:9pt;color:#7F7F7F;\">Generated by Power Automate Desktop from %txt_WorkbookName%</p></body></html>'''
 File.WriteText File: txt_HtmlFile TextToWrite: txt_EmailBody AppendNewLine: False IfFileExists: File.IfFileExists.Overwrite Encoding: File.FileEncoding.UTF8
-Outlook.Launch Instance=> inst_Outlook
-Outlook.SendEmailThroughOutlook.SendEmail Instance: inst_Outlook Account: txt_OutlookAccount SendTo: txt_EmailTo Subject: txt_EmailSubject Body: txt_EmailBody IsBodyHtml: True IsDraft: bool_DraftOnly
+IF bool_SendToOutlook = True THEN
+    Outlook.Launch Instance=> inst_Outlook
+    Outlook.SendEmailThroughOutlook.SendEmail Instance: inst_Outlook Account: txt_OutlookAccount SendTo: txt_EmailTo Subject: txt_EmailSubject Body: txt_EmailBody IsBodyHtml: True IsDraft: bool_DraftOnly
+END
 **ENDREGION
 @@regionColor: '#FFD966'
-**REGION 6. Report: open the draft on screen (demo), then say what happened
-IF bool_DraftOnly = True THEN
+**REGION 6. Report: show the result (the browser, or the Outlook draft), then say what happened
+IF bool_SendToOutlook = False THEN
+    # The default browser opens the HTML file: the table as the reader of the email will see it
+    System.RunApplication.RunApplication ApplicationPath: txt_HtmlFile WindowStyle: System.ProcessWindowStyle.Normal ProcessId=> _num_BrowserProcess
+    SET txt_Outcome TO $'''table opened in your browser'''
+ELSE IF bool_DraftOnly = True THEN
     # PAD saves the draft but cannot open it: a few lines of PowerShell ask Outlook to display the newest draft with this subject
     Scripting.RunPowershellScript.RunScript Script: $'''$outlook = New-Object -ComObject Outlook.Application
 $drafts = $outlook.Session.GetDefaultFolder(16).Items
 $drafts.Sort(\"[LastModificationTime]\", $true)
 $mail = $drafts.Find(\"[Subject] = \'%txt_EmailSubject%\'\")
 if ($mail -ne $null) { $mail.Display() ; Write-Output \'displayed\' } else { Write-Output \'not found\' }''' ScriptOutput=> _txt_DisplayOutput ScriptError=> _txt_DisplayError
-    SET txt_Outcome TO $'''saved as a draft (Outlook, Drafts folder) and opened on screen'''
+    SET txt_Outcome TO $'''email saved as a draft (Outlook, Drafts folder) and opened on screen'''
 ELSE
-    SET txt_Outcome TO $'''sent to %txt_EmailTo%'''
+    SET txt_Outcome TO $'''email sent to %txt_EmailTo%'''
 END
-Display.ShowMessageDialog.ShowMessage Title: $'''Excel to Outlook''' Message: $'''%txt_WorkbookName% converted with its formatting: email %txt_Outcome%. HTML copy: %txt_HtmlFile%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+Display.ShowMessageDialog.ShowMessage Title: $'''Excel to Outlook''' Message: $'''%txt_WorkbookName% converted with its formatting: %txt_Outcome%. HTML file: %txt_HtmlFile%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
 **ENDREGION

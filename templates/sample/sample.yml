@@ -1,17 +1,38 @@
-# The card of this sample. tools/build_docs.py turns it into README.md and checks it against the files in flow/.
+# The card of this sample. tools/build_docs.py writes README.md (overview) and SETUP.md (step by step) from it and from flow/.
+# Quote any text that holds a comma inside { }.
 id: what-it-does-in-kebab-case         # = the folder name
 version: 1.0.0                         # x.y.z, see CONTRIBUTING, section Versions
 title: What it does, in a few words
-summary: One sentence a manager understands.
-category: Excel                        # Excel | Files & text | PDF | Web | Desktop apps | Email | ...
+summary: One sentence that says what it does and what it keeps or produces.
+category: Excel                        # one of categories.yml: Excel | Files & text | PDF | Web | Desktop apps | Email
 kind: flow                             # flow = one job end to end ; component = a reusable local function + an example call
 level: beginner                        # beginner | intermediate | advanced
-minutes: 10                            # time for a beginner, from zero to a successful run
+minutes: 10                            # setup time, from zero to a successful run
 tags: []
+techniques: []                         # ids from techniques.yml, e.g. [local-function, errors-as-outputs]
 authors: [Your name]
 
-the_job: |
-  Two or three lines: who does what by hand today, and what the flow does instead.
+problem: |
+  Two or three lines: the business need, and why PAD alone does not cover it (or why the obvious way fails).
+
+solution: |
+  Two or three lines: the approach, the key action or technique, and the shape of the reusable part.
+
+# keeps: "What the output keeps from the input, when it matters."
+
+# design:                              # the approaches you compared, with measured times
+#   measured: <date>, on <what>
+#   alternatives:
+#     - approach: Native actions only
+#       time: 0.1 s
+#       result: What it gives.
+#       verdict: Why it was kept or rejected.
+
+# performance:
+#   - "Measured time, with the date and the size of the input."
+
+limits:
+  - What it does not do, what it needs, what was not tested.
 
 pictures:
   result: {file: assets/result.png, caption: "What the reader gets"}           # required
@@ -27,7 +48,14 @@ files:
     into: C:\Work\Example
     note: Create the folder first.
 
-# quick_try: {file: 3-Test.txt, says: "One block, nothing to create."}
+# quick_try:                           # required for a component: one block for Main that asks nothing
+#   file: 3-Test.txt
+#   minutes: 2
+#   says: The whole job in one block pasted into Main. No subflow, no input or output to create.
+#   apps: [Microsoft Excel (desktop)]  # as few as possible
+#   expect:
+#     - What the reader sees at the end.
+#   option: "An optional setting of its first region, and what it needs."
 
 flow_name: The name the reader gives the flow in PAD
 

@@ -1,0 +1,16 @@
+# The categories of the gallery. A sample names one of them (category: in sample.yml); tools/build_docs.py refuses any other.
+# One category = one family of office work a consultant is asked to automate. Add one only when a sample needs it.
+# summary: one sentence shown under the heading of the category in the gallery.
+
+Excel:
+  summary: Read, transform and publish workbooks without losing what matters in them.
+Files & text:
+  summary: Folders, file names and text that must be read, sorted or renamed reliably.
+PDF:
+  summary: Extract, split, merge and file PDF documents.
+Web:
+  summary: Portals and web apps driven through the browser.
+Desktop apps:
+  summary: Windows and legacy applications driven through their user interface.
+Email:
+  summary: Outlook messages read, filed, drafted or sent.

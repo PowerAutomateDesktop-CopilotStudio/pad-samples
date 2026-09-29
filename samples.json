@@ -1,0 +1,46 @@
+{
+  "samples": [
+    {
+      "id": "excel-range-to-html-table",
+      "title": "Excel range to an email-ready HTML table",
+      "summary": "Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.",
+      "category": "Excel",
+      "kind": "component",
+      "level": "intermediate",
+      "version": "1.1.0",
+      "released": "2026-09-29",
+      "techniques": [
+        "local-function",
+        "errors-as-outputs",
+        "powershell-script",
+        "excel-com",
+        "email-safe-html",
+        "outlook-draft"
+      ],
+      "requires": [
+        "Microsoft Excel (desktop)"
+      ],
+      "quick_try_minutes": 2,
+      "setup_minutes": 15,
+      "subflows": 1,
+      "inputs": 3,
+      "outputs": 8,
+      "ui_elements": 0,
+      "tested": [
+        {
+          "pad": "2.72.183",
+          "date": "2026-09-26",
+          "path": "Full flow",
+          "result": "pass"
+        },
+        {
+          "pad": "2.72.183",
+          "date": "2026-09-29",
+          "path": "Quick try",
+          "result": "pass"
+        }
+      ],
+      "page": "samples/excel-range-to-html-table/README.md"
+    }
+  ]
+}

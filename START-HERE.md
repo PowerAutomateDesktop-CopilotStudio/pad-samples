@@ -1,52 +1,94 @@
-[⬅ All samples](README.md)
+[All samples](README.md)
 
-# Start here: your first paste in 3 minutes
+# How the samples are organised
 
-A Power Automate Desktop flow is text. You can copy it from this site and paste it into PAD, exactly like text into Word.
-PAD turns it back into actions on the canvas.
+Every sample follows the same layout, the same page structure and the same conventions.
+Once you have read one, you know where to find everything in all the others.
 
-## What PAD needs before the paste
+## One folder per sample
 
-The paste brings **the actions, their settings, the variables they create and the UI elements**. It does not bring:
+```text
+samples/<what-it-does>/
+├── README.md        overview: problem, solution, contract, design, limits, tested versions
+├── SETUP.md         step by step: files, subflows, variables, paste, run, adapt, troubleshooting
+├── CHANGELOG.md     one section per version
+├── sample.yml       the card both pages are generated from
+├── flow/            one text file per subflow, named <order to create>-<exact subflow name>.txt
+├── input/           sample files (fictitious data)
+├── expected/        what the flow produced on the test run
+└── assets/          screenshots
+```
 
-| Not carried by the paste | Where each sample tells you | Guide |
+Each sample is also published alone as a zip, on the **Releases** page, one release per version.
+
+## Two pages, two uses
+
+| You want to | Read | Sections, always in this order |
 |---|---|---|
-| 🧩 Subflows other than `Main` | Step "Create the flow and its subflows" | [Create a subflow](docs/create-a-subflow.md) |
-| 📥 Input and output variables | Step "Create the input and output variables" | [Create variables](docs/create-variables.md) |
-| ✋ Settings such as *Mark as sensitive* | Step "The step the paste cannot do" | [Sensitive values](docs/sensitive-values.md) |
-| 📁 Your files and folders | Step "Prepare the files" | |
+| decide whether it fits your case, reuse a part | `README.md` | Try it · Problem · Solution · Use it in your flow · How it works · Design choices · Performance · Limits · Files · Tested on |
+| rebuild it on your PC | `SETUP.md` | One section per path, lightest first: Quick try · Full or reusable version · In your own flow · Troubleshooting |
 
-If a sample says **none** for all four, you only paste into `Main`.
+## Try it: the lightest path first
 
-## Your first paste
+Every sample offers its ways to try it in the same order, from the one that asks the least to the one that asks the most,
+and says what each one asks you to create:
 
-1. Open a sample from the [gallery](README.md). If its page shows **In a hurry? Try it in 2 minutes**, that block is all you need.
-2. In PAD select **+ New flow**, give it a name, select **Create**. The designer opens on `Main`.
-3. On the sample page, open **Show the code** (or the file of the quick try), select the copy button at the top right of the block.
-4. Click once on the empty canvas of `Main`, press **Ctrl+V**. The actions appear.
-5. Compare with the sample page: same number of lines, Errors pane empty. Select **Run**.
+1. **Quick try**: one block pasted into `Main`. No subflow, no input or output variable. A few minutes to see it work.
+2. **Full or reusable version**: the subflows, their input and output variables, the steps the paste cannot carry.
+3. **In your own flow**: the reusable part called from the flow you are building.
 
-## How to read a variable name
+Stop at the path you need. The counts in the table are read from the code, so "Nothing" really means nothing.
 
-Every sample names its variables the same way, so a name tells you what it is:
+## Techniques
+
+The index [Samples by technique](TECHNIQUES.md) lists the samples that show a given idea (a local function, an
+error returned instead of thrown, Excel through COM...).
+
+## Conventions in the code
+
+**Variable names** say what a variable is before you open it:
 
 ```text
 in_loc_txt_WorkbookPath
 │  │   │   └── what it holds
-│  │   └────── type: txt Text · num Number · bool Boolean · date Datetime · lst List · tbl Datatable · row Datarow · inst Instance
+│  │   └────── type: txt · num · bool · date · lst · tbl · row · file · fold · inst · ui · cred · obj
 │  └────────── scope: glob = the whole flow · loc = one subflow
-└───────────── direction: in = you give it · out = it gives back · (nothing) = working variable, created by the paste
+└───────────── direction: in = given by the caller · out = returned · none = working variable
 ```
 
-## Region colours
+**Regions** cut every subflow by role, always in the same colours:
 
-Every flow is cut into coloured regions, always in the same colours:
-
-| Colour | Region |
+| Colour | Role |
 |---|---|
-| 🟦 cyan | settings: the only values you change |
-| 🟥 red | guards: what is checked before the work |
-| 🟩 green | reading the input |
-| 🟪 purple | the processing |
-| 🔷 blue | sub-steps, loops |
-| 🟨 gold | the output |
+| Cyan `#57FFE1` | settings: the only values to change |
+| Red `#F4B6B6` | guards: what is checked before the work |
+| Green `#C6E0B4` | reading the input |
+| Purple `#D9C3E9` | processing |
+| Blue `#BDD7EE` | sub-steps, loops |
+| Gold `#FFD966` | output |
+
+**A local function** (a local subflow with inputs and outputs) opens with its contract, then initialises every output
+before the first action that can fail, and reports a failure through a flag and a message instead of stopping the flow:
+
+```text
+# local subflow: Convert_Excel_To_Html
+# inputs: in_loc_txt_WorkbookPath, in_loc_txt_SheetName, in_loc_txt_RangeAddress
+# outputs: out_loc_txt_Html, out_loc_bool_Ok, out_loc_txt_Error, ...
+```
+
+## What a paste carries, and what it does not
+
+A paste brings the actions, their settings, the variables they produce and the UI elements. It does **not** bring the
+subflows other than `Main`, the input and output variables, or settings such as *Mark as sensitive*.
+`SETUP.md` lists exactly what to create before the paste; the guides below show where to click.
+
+- [Create a subflow](docs/create-a-subflow.md)
+- [Create input and output variables](docs/create-variables.md)
+- [Sensitive values](docs/sensitive-values.md)
+- [Troubleshooting a paste](docs/troubleshooting.md)
+
+## Versions
+
+Each sample has its own version (`x.y.z`): a patch pastes the same way, a minor adds something optional, a major asks
+you to create something again (a subflow, a variable, a file). The **Tested on** table of each overview gives the PAD
+versions it ran on.

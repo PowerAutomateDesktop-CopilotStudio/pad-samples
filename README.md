@@ -2,34 +2,26 @@
 
 # Power Automate Desktop samples
 
-**Ready-to-paste flows for real office work.** Each sample is a flow that ran on a real PC, with its sample files, the expected result, and a page that tells you exactly what to create before you paste.
+**Tested, documented Power Automate Desktop patterns.** Every sample starts with the quickest way to see it work, then states the problem, the design and the alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.
 
-| 1. Pick a sample | 2. Create what the card lists | 3. Copy, paste, run |
-|:---:|:---:|:---:|
-| 🔎 below, by task | 🧩 subflows · 📥 variables | 📋 one block per subflow |
-
-New to PAD? Read [**Start here**](START-HERE.md): your first paste in 3 minutes.
+**1 sample** · 1 category · 6 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Request a sample](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/issues/new?template=request-a-sample.yml)
 
 ## Excel
 
-| | Sample | Level | You create |
-|---|---|---|---|
-| <img src="samples/excel-range-to-html-table/assets/result.png" width="160"> | **[Excel range to an email-ready HTML table](samples/excel-range-to-html-table/README.md)**<br>Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready to paste into an Outlook email. | intermediate<br>15 min · v1.0.0 | 1 subflow · 11 variables |
+Read, transform and publish workbooks without losing what matters in them.
 
-## How to read a sample
+| | Sample | Techniques | Try it | Requires |
+|---|---|---|---|---|
+| <img src="samples/excel-range-to-html-table/assets/result.png" width="150"> | **[Excel range to an email-ready HTML table](samples/excel-range-to-html-table/README.md)**<br>Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.<br><sub>Reusable component · Intermediate · v1.1.0</sub> | Local function, Errors as outputs, PowerShell action, Excel COM, Email-safe HTML, Outlook draft | 2 min, nothing to create | Microsoft Excel (desktop) |
 
-Every sample page has the same order, so you always know where to look:
+## What every sample gives you
 
-1. **Before / after** pictures and the job it does
-2. **What you will create**: the count of subflows, variables, UI elements and manual steps
-3. **Step by step**: files → flow and subflows → variables → paste → the steps the paste cannot do → run
-4. **Make it yours**: the only lines to change
-5. **If something goes wrong**
+| Overview (`README.md`) | Setup (`SETUP.md`) |
+|---|---|
+| Try it · Problem · Solution · Use it in your flow · How it works · Design choices · Performance · Limits · Files · Tested on | The paths from the lightest to the fullest: Quick try · Full or reusable version · In your own flow · Troubleshooting |
 
-## Share your flow
-
-Read [CONTRIBUTING](CONTRIBUTING.md): one folder, one `sample.yml`, the tool writes the page for you.
+The whole catalogue is also in [`samples.json`](samples.json), one entry per sample.
 
 ## License
 
-[MIT](LICENSE): copy, adapt and use the samples in your own flows, at work included.
+[MIT](LICENSE): copy, adapt and use the samples in your own flows and your clients' flows.

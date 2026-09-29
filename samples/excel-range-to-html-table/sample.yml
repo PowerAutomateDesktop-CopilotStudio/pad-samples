@@ -1,30 +1,80 @@
-# The card of this sample. tools/build_docs.py turns it into README.md and checks it against the files in flow/.
-# Everything that can be read from the code (subflows, contract, UI elements, line counts, settings) is NOT repeated here.
+# The card of this sample. tools/build_docs.py writes README.md (overview) and SETUP.md (step by step) from it and from flow/.
+# Everything the code already says (subflows, contract, UI elements, line counts, settings, regions) is NOT repeated here.
+# Quote any text that holds a comma inside { }.
 id: excel-range-to-html-table
-version: 1.0.0             # x.y.z : see CONTRIBUTING, section Versions
+version: 1.1.0             # x.y.z : see CONTRIBUTING, section Versions
 title: Excel range to an email-ready HTML table
-summary: Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready to paste into an Outlook email.
+summary: Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.
 category: Excel
 kind: component            # flow = one job end to end ; component = a reusable local function + an example call
 level: intermediate        # beginner | intermediate | advanced
-minutes: 15
+minutes: 15                # setup time, from zero to a successful run
 tags: [excel, html, outlook, local-function, powershell]
+techniques: [local-function, errors-as-outputs, powershell-script, excel-com, email-safe-html, outlook-draft]
 authors: [HyperAutomatisation]
 
-the_job: |
-  Every quarter the sales report must reach the managers **as it looks in Excel**: colours, red variances, totals line.
-  Copying the range into an email loses half of it, and a screenshot cannot be searched or copied.
-  This sample reads the formatting from Excel itself and writes an HTML table with inline styles, the only kind every Outlook keeps.
+problem: |
+  A report must reach its readers **as it looks in Excel**: fills, conditional colours, borders, number formats.
+  PAD has no action that reads the formatting of a cell (*Read from Excel worksheet* returns values only), and a range
+  pasted by hand into an email keeps its styles in a `<style>` block that Outlook on the web and on mobile drop.
+
+solution: |
+  One *Run PowerShell script* action asks Excel itself. Excel, hidden and read-only, publishes the range as HTML with
+  its own engine; the script moves every CSS class inline on its cell, removes hidden rows and columns and the `mso-*`
+  rules, and writes every non-ASCII character as an entity. The action is wrapped in a **local function**
+  (3 inputs, 8 outputs) that never stops the flow: it returns a flag and a message.
+
+keeps: "Fills, fonts (name, size, colour, bold, italic, underline, strikethrough, rich text in a cell), alignment, wrap, indent, borders, merged cells, column widths, row heights, number formats as displayed, conditional formatting, hyperlinks."
+
+design:
+  measured: 2026-09-08, on the sample workbook (126 visible cells)
+  alternatives:
+    - approach: "Native: Read from Excel worksheet + an HTML template"
+      time: 0.06 s
+      result: Values only. No colour, font or border.
+      verdict: Use it when you impose your own style, not to keep the workbook's.
+    - approach: Excel publishes the range (PublishObjects) and nothing else
+      time: 0.26 s
+      result: All formatting, but as CSS classes in a `<style>` block; hidden cells emitted; windows-1252.
+      verdict: Excellent raw material. Needs the rewrite below.
+    - approach: Clipboard HTML after Range.Copy (what a manual paste uses)
+      time: 0.67 s
+      result: The same class-based HTML.
+      verdict: "Rejected: it overwrites the user's clipboard."
+    - approach: Cell by cell through COM (DisplayFormat)
+      time: 18 to 29 s
+      result: Faithful, inline CSS.
+      verdict: "Rejected: about 70 ms per cell, over two minutes for 2,000 cells."
+    - approach: A picture of the range
+      time: 1.9 s
+      result: Pixel-exact PNG.
+      verdict: "Rejected for a table: no search, no copy, images often blocked."
+    - approach: "**Chosen: Excel publishes, the script inlines the CSS**"
+      time: about 10 s
+      result: All formatting, inline CSS, hidden cells removed, entities.
+      verdict: The time does not depend on the size of the range.
+
+performance:
+  - "About 10 s per call whatever the size of the range: Excel start 3.6 s, workbook open 1.6 s, publish 1.6 s, read 0.2 s, rewrite 1.3 s, close 0.3 s (profile of 2026-09-08)."
+  - "Tested run of 2026-09-26: 18 rows x 7 columns converted in 8.55 s, HTML table of 37,397 characters."
+
+limits:
+  - Needs the desktop Excel on the PC (COM). The Outlook option of the quick try needs the classic Outlook with a profile; the new Outlook has no COM and no PAD action.
+  - "Not kept: images, charts, shapes, icon sets, data bars, comments (no HTML equivalent in an email)."
+  - The workbook path must not contain an apostrophe (it is interpolated in a PowerShell string).
+  - Script actions can be blocked by a data loss prevention (DLP) policy of the tenant.
+  - "Checked in Outlook desktop and in a browser. Outlook on the web, mobile and Gmail were not tested; the output is plain inline-styled table HTML, the most portable form."
+  - "A wide range gives a wide email: Excel's column widths are kept (952 px for the sample)."
 
 pictures:
-  before: {file: assets/before.png, caption: "The range in Excel: Q3 Sales, A1:H19"}
-  result: {file: assets/result.png, caption: "The HTML table produced by the flow, same look"}
-  variables_pane: {file: assets/variables-pane.png, caption: "The function's Variables pane, section Local, once the contract is created: Input 3, Output 8"}
+  before: {file: assets/before.png, caption: "The range in Excel: sheet Q3 Sales, A1:H19 (row 19 and column C are hidden)"}
+  result: {file: assets/result.png, caption: "The HTML table returned by the function, same look"}
+  variables_pane: {file: assets/variables-pane.png, caption: "The function's Variables pane, section Local: Input 3, Output 8"}
   canvas:
     2-Convert_Excel_To_Html.txt: {file: assets/canvas.png, caption: "The top of the function after the paste"}
-    1-Main.txt: {file: assets/canvas-main.png, caption: "Main after the paste: 4 values, 1 call, guards, output"}
+    1-Main.txt: {file: assets/canvas-main.png, caption: "Main after the paste"}
 
-apps: [Microsoft Excel (desktop), Microsoft Outlook (desktop) for the quick demo only]
+apps: [Microsoft Excel (desktop)]
 
 files:
   - put: input/Sales_Report_2026-Q3.xlsx
@@ -33,14 +83,20 @@ files:
 
 quick_try:
   file: 3-Test.txt
-  says: One block, nothing to create. It converts the range and opens an Outlook draft with the table in the body.
-
+  minutes: 2
+  says: The whole conversion in one block pasted into Main. No subflow, no input or output to create.
+  apps: [Microsoft Excel (desktop)]
+  expect:
+    - "Your browser opens C:\\Reports\\Sales\\Email\\Sales_Report_2026-Q3.html: the table with the look of the workbook."
+    - "A message: Sales_Report_2026-Q3.xlsx converted with its formatting: table opened in your browser."
+  picture: {file: assets/quick-try-message.png, caption: The message at the end of the quick try}
+  option: "Set bool_SendToOutlook to True in the first region to also get the table in an Outlook email, saved as a draft and opened on screen. It needs the classic Outlook with a profile."
 flow_name: Excel to HTML
 
 subflows:
-  1-Main.txt: {does: "Sets the workbook, sheet, range and output folder, calls the function, writes the HTML file."}
-  2-Convert_Excel_To_Html.txt: {does: "The reusable part: 3 values in, the HTML table and 7 details out. Never stops the flow: it returns a flag and a message."}
-  3-Test.txt: {does: "The quick demo above, kept as a subflow so you can run it again at any time.", optional: true}
+  1-Main.txt: {does: "Example call: sets the workbook, sheet, range and output folder, calls the function, writes the HTML file."}
+  2-Convert_Excel_To_Html.txt: {does: "The reusable part: 3 values in, the HTML table and 7 details out. Never stops the flow."}
+  3-Test.txt: {does: "The quick try: the whole conversion in one block, the table opened in the browser (or an Outlook draft).", optional: true}
 
 variables:
   in_loc_txt_WorkbookPath: {holds: Full path of the workbook, e.g: 'C:\Reports\Sales\Sales_Report_2026-Q3.xlsx'}
@@ -48,7 +104,7 @@ variables:
   in_loc_txt_RangeAddress: {holds: "Range to read; empty = the used range", e.g: 'A1:H19'}
   out_loc_txt_Html: {holds: The HTML table with inline styles, e.g: '<table style="border-collapse:collapse;...'}
   out_loc_bool_Ok: {holds: True when the conversion worked, e.g: 'True'}
-  out_loc_txt_Error: {holds: "Why it failed, empty when out_loc_bool_Ok is True", e.g: 'Workbook not found: C:\Reports\Sales\Q3.xlsx'}
+  out_loc_txt_Error: {holds: "Why it failed; empty when out_loc_bool_Ok is True", e.g: 'Workbook not found: C:\Reports\Sales\Q3.xlsx'}
   out_loc_txt_SheetName: {holds: The sheet really read, e.g: Q3 Sales}
   out_loc_txt_RangeAddress: {holds: The range really read, e.g: 'A1:H19'}
   out_loc_num_RowCount: {holds: Visible rows in the table, e.g: '18'}
@@ -64,13 +120,14 @@ run:
 
 troubleshooting:
   - when: The Errors pane lists unknown variables after the paste into the function.
-    do: A contract name differs from the table of step 3. Fix the name in the Variables pane (capitals count), the errors disappear.
+    do: A contract name differs from the table of step 3. Fix the name in the Variables pane (capitals count); the errors disappear.
   - when: The new subflow appears under Global, not Local.
-    do: The scope is easily lost while typing the name. Delete the subflow and create it again, check Local just before Save.
+    do: The scope is easily lost while typing the name. Delete the subflow and create it again; check Local just before Save.
   - when: Before the paste, the function shows warnings about outputs never set.
     do: Normal. They disappear once the code of step 4 is pasted.
   - when: 'The message says "Conversion failed: Worksheet not found: ..." or "Range not valid: ...".'
     do: The sheet name must match the tab in Excel exactly, and the range must be an address such as A1:H19. Fix the SET lines of Main.
 
 tested:
-  - {pad: 2.72.183, date: 2026-09-26, result: pass}
+  - {pad: 2.72.183, date: 2026-09-26, path: Full flow, result: pass}
+  - {pad: 2.72.183, date: 2026-09-29, path: Quick try, result: pass}
