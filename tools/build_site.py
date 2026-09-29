@@ -33,6 +33,8 @@ SITE_CSS = """/* pad-samples site: small touches on top of Material */
 .md-typeset td:first-child code { white-space: nowrap; }
 /* long Robin lines wrap on screen; the copy button still copies each line as one line */
 .md-typeset pre > code { white-space: pre-wrap; word-break: break-word; }
+/* Anne's logo stays in the header on narrow screens too (the theme hides it below 76.25em) */
+@media screen and (max-width: 76.2344em) { .md-header__button.md-logo { display: inline-block; } .md-header__button.md-logo img { height: 1.6rem; } }
 """
 
 
