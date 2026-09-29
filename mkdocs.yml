@@ -14,6 +14,8 @@ site_dir: site
 theme:
   name: material
   language: en
+  logo: docs/images/anne-logo.png
+  favicon: docs/images/anne-favicon.png
   icon:
     repo: fontawesome/brands/github
   features:
