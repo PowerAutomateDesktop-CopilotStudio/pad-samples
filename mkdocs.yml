@@ -13,6 +13,7 @@ site_dir: site
 
 theme:
   name: material
+  custom_dir: overrides
   language: en
   logo: docs/images/anne-logo.png
   favicon: docs/images/anne-favicon.png

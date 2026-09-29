@@ -106,6 +106,8 @@ data-protection and governance rules before any real use.
 Microsoft, Power Automate, Power Automate Desktop and Copilot Studio are trademarks of Microsoft. These samples are
 not affiliated with or endorsed by Microsoft.
 
+Page views are counted with GoatCounter, without cookies.
+
 ## Versions
 
 Each sample has its own version (`x.y.z`): a patch pastes the same way, a minor adds something optional, a major asks
