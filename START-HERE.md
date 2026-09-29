@@ -87,6 +87,16 @@ subflows other than `Main`, the input and output variables, or settings such as 
 - [Sensitive values](docs/sensitive-values.md)
 - [Troubleshooting a paste](docs/troubleshooting.md)
 
+## Disclaimer
+
+These samples are published **for e-learning purposes**: to learn and practise Power Automate Desktop. They are not
+production-ready solutions and are provided as is, without warranty (see the [MIT license](LICENSE)). Try them in a
+test environment with their fictitious sample data, then review, adapt and test them against your own security,
+data-protection and governance rules before any real use.
+
+Microsoft, Power Automate, Power Automate Desktop and Copilot Studio are trademarks of Microsoft. These samples are
+not affiliated with or endorsed by Microsoft.
+
 ## Versions
 
 Each sample has its own version (`x.y.z`): a patch pastes the same way, a minor adds something optional, a major asks

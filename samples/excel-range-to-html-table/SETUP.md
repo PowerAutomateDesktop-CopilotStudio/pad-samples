@@ -6,6 +6,8 @@
 
 Tested on PAD 2.72.183 · v1.1.0
 
+*For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
+
 From the path that asks the least to the one that asks the most. Stop at the one you need.
 
 | Path | You create | Needs | Time |

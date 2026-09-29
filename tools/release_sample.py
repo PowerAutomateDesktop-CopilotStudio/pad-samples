@@ -56,7 +56,8 @@ def main():
     notes = [section.group(0).strip(), "",
              f"Tested on Power Automate Desktop {card['tested'][-1]['pad']} ({card['tested'][-1]['date']}).", "",
              f"**Start here:** [the setup page](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/blob/{tag}/samples/{sample_id}/SETUP.md) "
-             f"begins with the lightest way to try it. The zip holds the same folder."]
+             f"begins with the lightest way to try it. The zip holds the same folder.", "",
+             "For e-learning purposes: try it in a test environment and review it before any real use."]
     notes_path.write_text("\n".join(notes) + "\n", encoding="utf-8")
     print(f"ok   {zip_path.relative_to(ROOT)}: {len(files)} files ; notes {notes_path.relative_to(ROOT)}")
 

@@ -339,7 +339,7 @@ class Sample:
     def overview(self):
         c, pics = self.card, self.pics
         md = [GENERATED, "", f"[All samples](../../README.md) › {c['category']}", "", f"# {c['title']}", "",
-              c["summary"], "", self.meta_line(), "", self.links_line(), "", fig(pics["result"], 720), ""]
+              c["summary"], "", self.meta_line(), "", self.links_line(), "", '*For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*', "", fig(pics["result"], 720), ""]
 
         md += ["## Try it", "", "From the path that asks the least to the one that asks the most. Stop at the one you need.", ""]
         md += self.ladder_table("SETUP.md")
@@ -414,7 +414,7 @@ class Sample:
         c, pics = self.card, self.pics
         ladder = self.ladder()
         md = [GENERATED, "", f"[All samples](../../README.md) › [{c['title']}](README.md) › Setup", "",
-              f"# Set up: {c['title']}", "", f"Tested on PAD {c['tested'][-1]['pad']} · v{self.version}", ""]
+              f"# Set up: {c['title']}", "", f"Tested on PAD {c['tested'][-1]['pad']} · v{self.version}", "", '*For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*', ""]
         if len(ladder) > 1:
             md += ["From the path that asks the least to the one that asks the most. Stop at the one you need.", ""]
         md += self.ladder_table("")
@@ -571,7 +571,8 @@ def gallery(samples, techniques, categories):
           f"**{n} sample{'s' if n != 1 else ''}** · {len(cats)} categor{'ies' if len(cats) != 1 else 'y'} · "
           f"{len(used)} techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · "
           f"[Contribute](CONTRIBUTING.md) · [Request a sample]({REPO_URL}/issues/new?template=request-a-sample.yml) · "
-          "[Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)", ""]
+          "[Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)", "",
+          "> [!IMPORTANT]", "> **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).", "",]
     if len(cats) > 1:
         md += ["**Categories:** " + " · ".join(f"[{c}](#{anchor(c)}) ({len(by_cat[c])})" for c in cats), ""]
     if n > 3:

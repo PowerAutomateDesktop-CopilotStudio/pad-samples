@@ -10,6 +10,8 @@ Turn any Excel range into an HTML table that keeps its look (fills, fonts, borde
 
 [**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/releases/download/excel-range-to-html-table-v1.1.0/excel-range-to-html-table-v1.1.0.zip) · [Changelog](CHANGELOG.md)
 
+*For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
+
 <img src="assets/result.png" alt="The HTML table returned by the function, same look" width="720"><br><sub>The HTML table returned by the function, same look</sub>
 
 ## Try it
