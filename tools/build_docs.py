@@ -575,7 +575,7 @@ def gallery(samples, techniques, categories):
           f"[Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml) · "
           "[Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)", "",
           "> [!IMPORTANT]", "> **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).", "",
-          "> [!TIP]", "> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges.", "",]
+          "> [!TIP]", "> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges. Private request: [LinkedIn](https://www.linkedin.com/in/franckmongo/).", "",]
     if len(cats) > 1:
         md += ["**Categories:** " + " · ".join(f"[{c}](#{anchor(c)}) ({len(by_cat[c])})" for c in cats), ""]
     if n > 3:

@@ -12,7 +12,7 @@ Every sample starts with the quickest way to see it work, then states the proble
 > **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).
 
 > [!TIP]
-> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges.
+> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges. Private request: [LinkedIn](https://www.linkedin.com/in/franckmongo/).
 
 ## Excel
 

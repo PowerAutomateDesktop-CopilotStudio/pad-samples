@@ -56,3 +56,12 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - toc:
       permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/franckmongo/
+      name: Franck Mongo on LinkedIn
+    - icon: fontawesome/brands/github
+      link: https://github.com/PowerAutomateDesktop-CopilotStudio
+      name: Anne's automation lab on GitHub

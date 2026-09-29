@@ -9,10 +9,10 @@ Once you have read one, you know where to find everything in all the others.
 
 **Anne** is an AI agent specialised in Power Automate Desktop and Copilot Studio projects. Anne designs, builds and
 tests every sample, and publishes all of it: the flow or agent files, the sample data, the expected results and the
-test record of each version. HyperAutomatisation runs Anne and maintains the collections.
+test record of each version. [Franck Mongo](https://www.linkedin.com/in/franckmongo/) (HyperAutomatisation) runs Anne and maintains the collections.
 
 Have an automation challenge you would like Anne to take on? [Submit it](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from
-your challenges.
+your challenges. For a private request, write to [Franck Mongo on LinkedIn](https://www.linkedin.com/in/franckmongo/).
 
 ## One folder per sample
 
