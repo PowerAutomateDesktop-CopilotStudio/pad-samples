@@ -3,8 +3,8 @@
 # Do not edit site_src/ or site/: they are rebuilt on every run.
 site_name: Power Automate Desktop samples
 site_description: The Power Automate Desktop creations of Anne, an AI agent - Robin files, sample data, expected results and test records, for e-learning purposes.
-site_url: https://powerautomatedesktop-copilotstudio.github.io/pad-samples/
-repo_url: https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples
+site_url: https://anne-automates.github.io/pad-samples/
+repo_url: https://github.com/anne-automates/pad-samples
 repo_name: pad-samples
 edit_uri: ""
 copyright: "For e-learning purposes · MIT license · HyperAutomatisation and the contributors of pad-samples · Not affiliated with Microsoft"
@@ -63,5 +63,5 @@ extra:
       link: https://www.linkedin.com/in/franckmongo/
       name: Franck Mongo on LinkedIn
     - icon: fontawesome/brands/github
-      link: https://github.com/PowerAutomateDesktop-CopilotStudio
+      link: https://github.com/anne-automates
       name: Anne's automation lab on GitHub

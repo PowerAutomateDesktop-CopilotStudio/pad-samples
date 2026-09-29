@@ -23,7 +23,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO_URL = "https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples"
+REPO_URL = "https://github.com/anne-automates/pad-samples"
 SEMVER = re.compile(r"\d+\.\d+\.\d+")
 TYPES = {"txt": "Text", "num": "Number", "bool": "Boolean", "date": "Datetime", "lst": "List", "tbl": "Datatable",
          "row": "Datarow", "file": "File", "fold": "Folder", "inst": "Instance", "ui": "UI element", "xml": "XML node",
@@ -572,10 +572,10 @@ def gallery(samples, techniques, categories):
           "alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.", "",
           f"**{n} sample{'s' if n != 1 else ''}** · {len(cats)} categor{'ies' if len(cats) != 1 else 'y'} · "
           f"{len(used)} techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · "
-          f"[Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml) · "
-          "[Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)", "",
+          f"[Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/anne-automates/anne-automates.github.io/issues/new?template=submit-a-challenge.yml) · "
+          "[Copilot Studio samples](https://anne-automates.github.io/copilot-studio-samples/)", "",
           "> [!IMPORTANT]", "> **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).", "",
-          "> [!TIP]", "> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges. Private request: [LinkedIn](https://www.linkedin.com/in/franckmongo/).", "",]
+          "> [!TIP]", "> **Have an automation challenge?** [Submit it to Anne](https://github.com/anne-automates/anne-automates.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges. Private request: [LinkedIn](https://www.linkedin.com/in/franckmongo/).", "",]
     if len(cats) > 1:
         md += ["**Categories:** " + " · ".join(f"[{c}](#{anchor(c)}) ({len(by_cat[c])})" for c in cats), ""]
     if n > 3:

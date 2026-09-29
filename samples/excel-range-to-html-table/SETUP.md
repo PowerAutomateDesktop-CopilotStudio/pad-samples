@@ -880,4 +880,4 @@ The values to change are in the first region of `Main` (cyan):
 | Before the paste, the function shows warnings about outputs never set. | Normal. They disappear once the code of step 4 is pasted. |
 | The message says "Conversion failed: Worksheet not found: ..." or "Range not valid: ...". | The sheet name must match the tab in Excel exactly, and the range must be an address such as A1:H19. Fix the SET lines of Main. |
 
-Other cases: [Troubleshooting a paste](../../docs/troubleshooting.md) · [report a problem](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/issues/new?template=sample-does-not-work.yml&title=%5Bexcel-range-to-html-table%5D+).
+Other cases: [Troubleshooting a paste](../../docs/troubleshooting.md) · [report a problem](https://github.com/anne-automates/pad-samples/issues/new?template=sample-does-not-work.yml&title=%5Bexcel-range-to-html-table%5D+).
