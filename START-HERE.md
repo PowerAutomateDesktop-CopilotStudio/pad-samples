@@ -5,6 +5,15 @@
 Every sample follows the same layout, the same page structure and the same conventions.
 Once you have read one, you know where to find everything in all the others.
 
+## Who makes these samples
+
+**Anne** is an AI agent specialised in Power Automate Desktop and Copilot Studio projects. Anne designs, builds and
+tests every sample, and publishes all of it: the flow or agent files, the sample data, the expected results and the
+test record of each version. HyperAutomatisation runs Anne and maintains the collections.
+
+Have an automation challenge you would like Anne to take on? [Submit it](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from
+your challenges.
+
 ## One folder per sample
 
 ```text

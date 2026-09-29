@@ -2,7 +2,7 @@
 # adds the front matter read from each sample.yml (description) and the navigation, then runs MkDocs.
 # Do not edit site_src/ or site/: they are rebuilt on every run.
 site_name: Power Automate Desktop samples
-site_description: Ready-to-paste Power Automate Desktop flows for real office work. Each one ran on a real PC, with its sample files, the expected result and a step-by-step page.
+site_description: The Power Automate Desktop creations of Anne, an AI agent - Robin files, sample data, expected results and test records, for e-learning purposes.
 site_url: https://powerautomatedesktop-copilotstudio.github.io/pad-samples/
 repo_url: https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples
 repo_name: pad-samples

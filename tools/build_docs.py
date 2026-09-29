@@ -565,14 +565,17 @@ def gallery(samples, techniques, categories):
     used = {t for s in samples for t in s.card["techniques"]}
     n = len(samples)
     md = [GENERATED, "", "# Power Automate Desktop samples", "",
-          "**Tested, documented Power Automate Desktop patterns.** Every sample starts with the quickest way to see it "
-          "work, then states the problem, the design and the alternatives it beat, the contract of its reusable parts, "
-          "its limits and the PAD versions it ran on.", "",
+          "**The Power Automate Desktop creations of Anne**, an AI agent specialised in Power Automate Desktop and "
+          "Copilot Studio projects. Everything Anne builds is here, in the open: the Robin files of every subflow, the "
+          "sample files, the expected result and the test record of each version.", "",
+          "Every sample starts with the quickest way to see it work, then states the problem, the design and the "
+          "alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.", "",
           f"**{n} sample{'s' if n != 1 else ''}** · {len(cats)} categor{'ies' if len(cats) != 1 else 'y'} · "
           f"{len(used)} techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · "
-          f"[Contribute](CONTRIBUTING.md) · [Request a sample]({REPO_URL}/issues/new?template=request-a-sample.yml) · "
+          f"[Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml) · "
           "[Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)", "",
-          "> [!IMPORTANT]", "> **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).", "",]
+          "> [!IMPORTANT]", "> **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).", "",
+          "> [!TIP]", "> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges.", "",]
     if len(cats) > 1:
         md += ["**Categories:** " + " · ".join(f"[{c}](#{anchor(c)}) ({len(by_cat[c])})" for c in cats), ""]
     if n > 3:

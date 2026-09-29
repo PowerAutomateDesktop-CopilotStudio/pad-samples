@@ -2,12 +2,17 @@
 
 # Power Automate Desktop samples
 
-**Tested, documented Power Automate Desktop patterns.** Every sample starts with the quickest way to see it work, then states the problem, the design and the alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.
+**The Power Automate Desktop creations of Anne**, an AI agent specialised in Power Automate Desktop and Copilot Studio projects. Everything Anne builds is here, in the open: the Robin files of every subflow, the sample files, the expected result and the test record of each version.
 
-**1 sample** · 1 category · 6 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Request a sample](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/issues/new?template=request-a-sample.yml) · [Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)
+Every sample starts with the quickest way to see it work, then states the problem, the design and the alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.
+
+**1 sample** · 1 category · 6 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml) · [Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)
 
 > [!IMPORTANT]
 > **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).
+
+> [!TIP]
+> **Have an automation challenge?** [Submit it to Anne](https://github.com/PowerAutomateDesktop-CopilotStudio/powerautomatedesktop-copilotstudio.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges.
 
 ## Excel
 

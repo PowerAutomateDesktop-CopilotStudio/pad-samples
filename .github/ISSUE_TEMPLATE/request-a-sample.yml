@@ -1,5 +1,5 @@
-name: Request a sample
-description: A task you do by hand and would like to see as a sample.
+name: Submit a challenge
+description: A Power Automate Desktop task you would like Anne to automate as a sample.
 labels: [sample request]
 body:
   - type: textarea

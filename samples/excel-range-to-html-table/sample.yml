@@ -11,7 +11,7 @@ level: intermediate        # beginner | intermediate | advanced
 minutes: 15                # setup time, from zero to a successful run
 tags: [excel, html, outlook, local-function, powershell]
 techniques: [local-function, errors-as-outputs, powershell-script, excel-com, email-safe-html, outlook-draft]
-authors: [HyperAutomatisation]
+authors: [Anne (AI agent), HyperAutomatisation]
 
 problem: |
   A report must reach its readers **as it looks in Excel**: fills, conditional colours, borders, number formats.
