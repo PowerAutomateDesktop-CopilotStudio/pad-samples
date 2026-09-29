@@ -41,7 +41,7 @@ def copy_pages():
     if SRC.exists():
         shutil.rmtree(SRC)
     SRC.mkdir()
-    for name in ("README.md", "START-HERE.md", "TECHNIQUES.md", "CONTRIBUTING.md", "LICENSE"):
+    for name in ("README.md", "START-HERE.md", "TECHNIQUES.md", "CONTRIBUTING.md", "LICENSE", "samples.json"):
         shutil.copy2(ROOT / name, SRC / name)
     shutil.copytree(ROOT / "docs", SRC / "docs")
     shutil.copytree(ROOT / "samples", SRC / "samples")
@@ -108,6 +108,7 @@ def write_config(cards):
             {"Troubleshooting a paste": "docs/troubleshooting.md"},
         ]},
 
+        {"Copilot Studio samples": "https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/"},
         {"Contribute": "CONTRIBUTING.md"},
     ]
     config = ROOT / ".site.yml"

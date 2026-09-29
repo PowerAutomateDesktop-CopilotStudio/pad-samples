@@ -4,7 +4,7 @@
 
 **Tested, documented Power Automate Desktop patterns.** Every sample starts with the quickest way to see it work, then states the problem, the design and the alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.
 
-**1 sample** · 1 category · 6 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Request a sample](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/issues/new?template=request-a-sample.yml)
+**1 sample** · 1 category · 6 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Request a sample](https://github.com/PowerAutomateDesktop-CopilotStudio/pad-samples/issues/new?template=request-a-sample.yml) · [Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)
 
 ## Excel
 

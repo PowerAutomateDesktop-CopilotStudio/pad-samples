@@ -570,7 +570,8 @@ def gallery(samples, techniques, categories):
           "its limits and the PAD versions it ran on.", "",
           f"**{n} sample{'s' if n != 1 else ''}** · {len(cats)} categor{'ies' if len(cats) != 1 else 'y'} · "
           f"{len(used)} techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · "
-          f"[Contribute](CONTRIBUTING.md) · [Request a sample]({REPO_URL}/issues/new?template=request-a-sample.yml)", ""]
+          f"[Contribute](CONTRIBUTING.md) · [Request a sample]({REPO_URL}/issues/new?template=request-a-sample.yml) · "
+          "[Copilot Studio samples](https://powerautomatedesktop-copilotstudio.github.io/copilot-studio-samples/)", ""]
     if len(cats) > 1:
         md += ["**Categories:** " + " · ".join(f"[{c}](#{anchor(c)}) ({len(by_cat[c])})" for c in cats), ""]
     if n > 3:
