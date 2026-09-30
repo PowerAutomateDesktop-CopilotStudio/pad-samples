@@ -261,6 +261,19 @@ class Sample:
         for alt in c.get("design", {}).get("alternatives", []):
             if set(alt) - {"approach", "time", "result", "verdict"}:
                 err.append(f"design.alternatives: unknown keys in {alt} (quote a text that holds a comma)")
+        for m in c.get("prerequisites", []):
+            if not isinstance(m, dict) or set(m) - {"title", "why", "how", "picture"} or not m.get("title") or not m.get("how"):
+                err.append("prerequisites: each entry is {title, how, why (optional), picture (optional)}")
+        if q and q.get("files", True) not in (True, False):
+            err.append("quick_try: files is true (the quick try uses the files of files:) or false (it needs no file)")
+        for f, shots in self.pics.get("actions", {}).items():
+            if f not in self.card_subs:
+                err.append(f"pictures.actions: {f} is not a file of flow/")
+            for p in shots or []:
+                if not isinstance(p, dict) or not p.get("file") or not p.get("caption"):
+                    err.append(f"pictures.actions: {f} holds a list of {{file, caption}}")
+                elif not (self.folder / p["file"]).exists():
+                    err.append(f"pictures.actions: {p['file']} does not exist")
         return err
 
     def warnings(self):
@@ -413,6 +426,7 @@ class Sample:
     def setup(self):
         c, pics = self.card, self.pics
         ladder = self.ladder()
+        prereq = c.get("prerequisites", [])
         md = [GENERATED, "", f"[All samples](../../README.md) › [{c['title']}](README.md) › Setup", "",
               f"# Set up: {c['title']}", "", f"Tested on PAD {c['tested'][-1]['pad']} · v{self.version}", "", '*For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*', ""]
         if len(ladder) > 1:
@@ -431,8 +445,12 @@ class Sample:
             if p["id"] == "quick":
                 q, s = c["quick_try"], self.quick
                 md += [f"{q['says']} Needs {p['needs']}.", ""]
-                h("Prepare the files")
-                md += self.files_lines()
+                if prereq:
+                    h("Install what it needs")
+                    md += self.prerequisite_lines()
+                if q.get("files", True):
+                    h("Prepare the files")
+                    md += self.files_lines()
                 h("Paste the block into Main")
                 md += [f"**+ New flow**, any name, **Create**. Click the empty canvas of `Main`, **Ctrl+V** the block of "
                        f"[`flow/{s.file}`](flow/{s.file}). Check: {len(s.lines)} lines, Errors pane empty.", ""]
@@ -448,10 +466,15 @@ class Sample:
 
             elif p["id"] == "full":
                 quick_first = ladder[0]["id"] == "quick"
+                # what the quick try already asked (its step numbers), so that the reader does it once
+                quick_files = quick_first and c["quick_try"].get("files", True)
+                if prereq:
+                    h("Install what it needs")
+                    md += (["The same as in 1.1.", ""] if quick_first else self.prerequisite_lines())
                 h("Prepare the files")
                 if lab := c.get("lab"):
                     md += [f"Install the practice app **{lab['name']}**. {lab['why']}", "", "```powershell", lab["install"], "```", ""]
-                md += (["The same files as in 1.1.", ""] if quick_first else self.files_lines())
+                md += ([f"The same files as in 1.{2 if prereq else 1}.", ""] if quick_files else self.files_lines())
                 h("Create the flow" + (" and its subflows" if self.to_create else ""))
                 md.append(f"**+ New flow**, name `{c['flow_name']}`, **Create**." + (" Nothing else to create." if not self.to_create else ""))
                 if self.to_create:
@@ -491,6 +514,10 @@ class Sample:
                     pic = pics.get("canvas", {}).get(s.file)
                     if pic:
                         md += [fig(pic, 640), ""]
+                    shots = pics.get("actions", {}).get(s.file) or []
+                    if shots:
+                        md += ["Double-click an action to check what the paste set in it:", ""]
+                        md += [x for p in shots for x in (fig(p, p.get("width", 480)), "")]
                 if self.quick:
                     md += [f"Optional: keep the quick try in the same flow, in a global subflow `{self.quick.name}` "
                            f"([`flow/{self.quick.file}`](flow/{self.quick.file})).", ""]
@@ -529,6 +556,15 @@ class Sample:
     def files_lines(self):
         return [f"- Copy [`{f['put']}`]({f['put'].replace('*', '')}) into `{f['into']}`. {f.get('note', '')}"
                 for f in self.card.get("files", [])] + [""]
+
+    def prerequisite_lines(self):
+        """What must be on the PC before any path works (an app, a model), once."""
+        md = []
+        for m in self.card.get("prerequisites", []):
+            md += [f"**{m['title']}.** " + " ".join(t for t in (m.get("why", ""), m["how"]) if t), ""]
+            if "picture" in m:
+                md += [fig(m["picture"], m["picture"].get("width", 480)), ""]
+        return md
 
 
 def code_block(s):

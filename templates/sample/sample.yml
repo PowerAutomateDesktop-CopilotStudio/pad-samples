@@ -40,8 +40,17 @@ pictures:
   # variables_pane: {file: assets/variables-pane.png, caption: "..."}
   # canvas:
   #   1-Main.txt: {file: assets/canvas.png, caption: "Main after the paste"}
+  # actions:                          # the dialog of a key action, shown under the canvas of its subflow
+  #   2-My_Function.txt:
+  #     - {file: assets/action.png, caption: "What the paste set in the action", width: 420}
 
 apps: []                               # e.g. [Microsoft Excel (desktop)]
+
+# prerequisites:                       # what must be on the PC before ANY path works, shown first in each path
+#   - title: Install the app, once
+#     why: The flow calls it; it installs nothing.
+#     how: "Where to get it, the command to run."
+#     picture: {file: assets/install.png, caption: "...", width: 640}
 
 files:
   - put: input/example.xlsx
@@ -53,6 +62,7 @@ files:
 #   minutes: 2
 #   says: The whole job in one block pasted into Main. No subflow, no input or output to create.
 #   apps: [Microsoft Excel (desktop)]  # as few as possible
+#   files: false                       # the block needs none of the files of files: (default true)
 #   expect:
 #     - What the reader sees at the end.
 #   option: "An optional setting of its first region, and what it needs."
