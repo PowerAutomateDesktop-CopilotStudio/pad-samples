@@ -51,7 +51,7 @@
       "category": "Email",
       "kind": "component",
       "level": "intermediate",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "released": "2026-10-01",
       "techniques": [
         "local-function",
@@ -66,8 +66,8 @@
       "quick_try_minutes": 2,
       "setup_minutes": 20,
       "subflows": 1,
-      "inputs": 6,
-      "outputs": 13,
+      "inputs": 3,
+      "outputs": 8,
       "ui_elements": 0,
       "tested": [
         {

@@ -11,6 +11,7 @@
 # The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once)
 SET txt_Endpoint TO $'''http://localhost:11434/v1'''
 SET txt_Model TO $'''llama3.2:3b'''
+# Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours
 SET txt_Email1 TO $'''Subject: Invoice 2026-118 for the September maintenance
 
 Hello, please find attached invoice 2026-118 for the maintenance visits of September: 1,480.00 EUR, payable within 30 days by bank transfer. Kind regards, Laura Benning, Northgate Facilities'''

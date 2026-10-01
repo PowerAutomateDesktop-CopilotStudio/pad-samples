@@ -6,9 +6,9 @@
 
 Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 
-**Reusable component** · Intermediate · Requires Ollama (free, runs on the PC) with the model llama3.2:3b · Tested on PAD 2.72.183 · v1.1.1
+**Reusable component** · Intermediate · Requires Ollama (free, runs on the PC) with the model llama3.2:3b · Tested on PAD 2.72.183 · v1.1.2
 
-[**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/anne-automates/pad-samples/releases/download/local-ai-email-triage-v1.1.1/local-ai-email-triage-v1.1.1.zip) · [Changelog](CHANGELOG.md)
+[**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/anne-automates/pad-samples/releases/download/local-ai-email-triage-v1.1.2/local-ai-email-triage-v1.1.2.zip) · [Changelog](CHANGELOG.md)
 
 *For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
 
@@ -21,7 +21,7 @@ From the path that asks the least to the one that asks the most. Stop at the one
 | Path | You create | Needs | Time |
 |---|---|---|---|
 | **[1. Quick try](SETUP.md#1-quick-try)**<br>Four short emails (two in English, two in French) triaged in one block pasted into Main. No subflow, no input or output to create, no file. | Nothing | Ollama with the model llama3.2:3b | 2 min |
-| **[2. Reusable version](SETUP.md#2-reusable-version)**<br>The function and its example call, in a flow of their own. | 1 local subflow, 6 inputs, 13 outputs | Ollama (free, runs on the PC) with the model llama3.2:3b | 20 min |
+| **[2. Reusable version](SETUP.md#2-reusable-version)**<br>The function and its example call, in a flow of their own. | 1 local subflow, 3 inputs, 8 outputs | Ollama (free, runs on the PC) with the model llama3.2:3b | 20 min |
 | **[3. In your own flow](#use-it-in-your-flow)**<br>Call `Triage_Email` from the flow you are building. | The subflow, its 11 variables and one CALL line | Your flow | Depends on your flow |
 
 ## Problem
@@ -208,7 +208,7 @@ Step by step: [Make it more accurate: train it on your own emails](SETUP.md#4-ma
 |---|---|---|---|
 | [`Main`](flow/1-Main.txt) | Main | 67 | Example call: reads each .txt email of the inbox, calls the function, copies the email into the folder of its category and writes a CSV report. |
 | [`Triage_Email`](flow/2-Triage_Email.txt) | Local | 88 | The reusable part: the text of one email in, its category, urgency, summary, reply flag and 4 details out. Never stops the flow. |
-| [`Test`](flow/3-Test.txt) | Global | 74 | The quick try: four emails written in the block, triaged by the same action and shown in one message. *(optional)* |
+| [`Test`](flow/3-Test.txt) | Global | 75 | The quick try: four emails written in the block, triaged by the same action and shown in one message. *(optional)* |
 | [`Classify_Email_Trained`](flow/4-Classify_Email_Trained.txt) | Local | 63 | The trained classifier: one email file in, its category and a confidence in percent out. Never stops the flow. *(optional)* |
 | [`Triage_Trained`](flow/5-Triage_Trained.txt) | Global | 75 | Example call of the trained classifier on the inbox: a confidence below the threshold goes to to_review. *(optional)* |
 

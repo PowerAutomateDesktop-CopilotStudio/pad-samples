@@ -2,7 +2,7 @@
 # Everything the code already says (subflows, contract, UI elements, line counts, settings, regions) is NOT repeated here.
 # Quote any text that holds a comma inside { }.
 id: local-ai-email-triage
-version: 1.1.1             # x.y.z : see CONTRIBUTING, section Versions
+version: 1.1.2             # x.y.z : see CONTRIBUTING, section Versions
 title: Email triage by a local AI model
 summary: Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 category: Email

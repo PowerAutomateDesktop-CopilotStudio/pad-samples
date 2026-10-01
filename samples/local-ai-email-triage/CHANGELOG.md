@@ -1,5 +1,9 @@
 # Changelog - Email triage by a local AI model
 
+## 1.1.2 - 2026-10-01
+
+- Setup page: the path Reusable version asks for 3 inputs and 8 outputs (the optional trained subflows were counted in it); the values to change in the quick try each have their own description, and a text on several lines shows its first line. One comment added in `Test` above the four sample emails: no action changed, no new run needed.
+
 ## 1.1.1 - 2026-10-01
 
 - The catalogue (`samples.json`) lists Ollama as one requirement instead of two pieces cut at a comma. The gallery card shows an illustration (`assets/cover.png`). Card only: the flow did not change, no new run needed.

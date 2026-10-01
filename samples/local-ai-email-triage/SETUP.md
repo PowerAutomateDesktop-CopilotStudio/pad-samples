@@ -4,7 +4,7 @@
 
 # Set up: Email triage by a local AI model
 
-Tested on PAD 2.72.183 · v1.1.1
+Tested on PAD 2.72.183 · v1.1.2
 
 *For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
 
@@ -13,7 +13,7 @@ From the path that asks the least to the one that asks the most. Stop at the one
 | Path | You create | Needs | Time |
 |---|---|---|---|
 | **[1. Quick try](#1-quick-try)**<br>Four short emails (two in English, two in French) triaged in one block pasted into Main. No subflow, no input or output to create, no file. | Nothing | Ollama with the model llama3.2:3b | 2 min |
-| **[2. Reusable version](#2-reusable-version)**<br>The function and its example call, in a flow of their own. | 1 local subflow, 6 inputs, 13 outputs | Ollama (free, runs on the PC) with the model llama3.2:3b | 20 min |
+| **[2. Reusable version](#2-reusable-version)**<br>The function and its example call, in a flow of their own. | 1 local subflow, 3 inputs, 8 outputs | Ollama (free, runs on the PC) with the model llama3.2:3b | 20 min |
 | **[3. In your own flow](#3-in-your-own-flow)**<br>Call `Triage_Email` from the flow you are building. | The subflow, its 11 variables and one CALL line | Your flow | Depends on your flow |
 
 ## 1. Quick try
@@ -28,9 +28,9 @@ Four short emails (two in English, two in French) triaged in one block pasted in
 
 ### 1.2 Paste the block into Main
 
-**+ New flow**, any name, **Create**. Click the empty canvas of `Main`, **Ctrl+V** the block of [`flow/3-Test.txt`](flow/3-Test.txt). Check: 74 lines, Errors pane empty.
+**+ New flow**, any name, **Create**. Click the empty canvas of `Main`, **Ctrl+V** the block of [`flow/3-Test.txt`](flow/3-Test.txt). Check: 75 lines, Errors pane empty.
 
-<details><summary>The code (74 lines)</summary>
+<details><summary>The code (75 lines)</summary>
 
 ```text
 # subflow: Test (global)
@@ -46,6 +46,7 @@ Four short emails (two in English, two in French) triaged in one block pasted in
 # The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once)
 SET txt_Endpoint TO $'''http://localhost:11434/v1'''
 SET txt_Model TO $'''llama3.2:3b'''
+# Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours
 SET txt_Email1 TO $'''Subject: Invoice 2026-118 for the September maintenance
 
 Hello, please find attached invoice 2026-118 for the maintenance visits of September: 1,480.00 EUR, payable within 30 days by bank transfer. Kind regards, Laura Benning, Northgate Facilities'''
@@ -143,12 +144,12 @@ The values to change are in the first region of `Test` (cyan):
 |---|---|---|
 | `txt_Endpoint` | `http://localhost:11434/v1` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
 | `txt_Model` | `llama3.2:3b` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
-| `txt_Email1` | `$'''Subject: Invoice 2026-118 for the September maintenance` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
-| `txt_Email2` | `$'''Objet : Commande 55721 toujours pas livrée` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
-| `txt_Email3` | `$'''Subject: Can we move Thursday?` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
-| `txt_Email4` | `$'''Objet : Doublez vos avis clients en 30 jours` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
-| `lst_Emails` | `[txt_Email1, txt_Email2, txt_Email3, txt_Email4]` | The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once) |
-| `txt_SystemPrompt` | `$'''You triage the emails of a shared inbox. The email can be in any language. Answer with one JSON object only, in this form: {"category": "...", "urgency": "...", "summary": "...", "reply_needed": true}` | The same instructions as in Triage_Email: six categories, three urgencies, a summary in English |
+| `txt_Email1` | `Subject: Invoice 2026-118 for the September maintenance …` | Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours |
+| `txt_Email2` | `Objet : Commande 55721 toujours pas livrée …` | Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours |
+| `txt_Email3` | `Subject: Can we move Thursday? …` | Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours |
+| `txt_Email4` | `Objet : Doublez vos avis clients en 30 jours …` | Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours |
+| `lst_Emails` | `[txt_Email1, txt_Email2, txt_Email3, txt_Email4]` | Four sample emails, two in English and two in French (a subject line, an empty line, the body): replace them with yours |
+| `txt_SystemPrompt` | `You triage the emails of a shared inbox. The email can be in any language. Answer with one JSON object only, in this form: {"category": "...", "urgency": "...", "summary": "...", "reply_needed": true} …` | The same instructions as in Triage_Email: six categories, three urgencies, a summary in English |
 
 > [!NOTE]
 > Change txt_Model in the first region to try another model you pulled (ollama pull <model>).

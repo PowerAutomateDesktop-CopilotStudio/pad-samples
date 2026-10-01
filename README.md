@@ -32,7 +32,7 @@ Outlook messages read, filed, drafted or sent.
 
 | | Sample | Techniques | Try it | Requires |
 |---|---|---|---|---|
-| <img src="samples/local-ai-email-triage/assets/cover.png" width="150"> | **[Email triage by a local AI model](samples/local-ai-email-triage/README.md)**<br>Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.<br><sub>Reusable component · Intermediate · v1.1.1</sub> | Local function, Errors as outputs, Local AI model, JSON by regex, Trained classifier | 2 min, nothing to create | Ollama with the model llama3.2:3b |
+| <img src="samples/local-ai-email-triage/assets/cover.png" width="150"> | **[Email triage by a local AI model](samples/local-ai-email-triage/README.md)**<br>Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.<br><sub>Reusable component · Intermediate · v1.1.2</sub> | Local function, Errors as outputs, Local AI model, JSON by regex, Trained classifier | 2 min, nothing to create | Ollama with the model llama3.2:3b |
 
 <!-- gallery:end -->
 
