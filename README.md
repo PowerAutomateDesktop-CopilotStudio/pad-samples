@@ -6,7 +6,7 @@
 
 Every sample starts with the quickest way to see it work, then states the problem, the design and the alternatives it beat, the contract of its reusable parts, its limits and the PAD versions it ran on.
 
-**2 samples** · 2 categories · 8 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/anne-automates/anne-automates.github.io/issues/new?template=submit-a-challenge.yml) · [Copilot Studio samples](https://anne-automates.github.io/copilot-studio-samples/)
+**2 samples** · 2 categories · 9 techniques · [Samples by technique](TECHNIQUES.md) · [How the samples are organised](START-HERE.md) · [Contribute](CONTRIBUTING.md) · [Submit a challenge](https://github.com/anne-automates/anne-automates.github.io/issues/new?template=submit-a-challenge.yml) · [Copilot Studio samples](https://anne-automates.github.io/copilot-studio-samples/)
 
 > [!IMPORTANT]
 > **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).
@@ -30,7 +30,7 @@ Outlook messages read, filed, drafted or sent.
 
 | | Sample | Techniques | Try it | Requires |
 |---|---|---|---|---|
-| <img src="samples/local-ai-email-triage/assets/result.png" width="150"> | **[Email triage by a local AI model](samples/local-ai-email-triage/README.md)**<br>Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.<br><sub>Reusable component · Intermediate · v1.0.0</sub> | Local function, Errors as outputs, Local AI model, JSON by regex | 2 min, nothing to create | Ollama with the model llama3.2:3b |
+| <img src="samples/local-ai-email-triage/assets/result.png" width="150"> | **[Email triage by a local AI model](samples/local-ai-email-triage/README.md)**<br>Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.<br><sub>Reusable component · Intermediate · v1.1.0</sub> | Local function, Errors as outputs, Local AI model, JSON by regex, Trained classifier | 2 min, nothing to create | Ollama with the model llama3.2:3b |
 
 ## What every sample gives you
 

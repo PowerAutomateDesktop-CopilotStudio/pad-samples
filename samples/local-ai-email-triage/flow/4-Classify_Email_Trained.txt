@@ -1,0 +1,68 @@
+# local subflow: Classify_Email_Trained
+# inputs: in_loc_txt_EmailFile, in_loc_txt_ModelFolder, in_loc_txt_PythonExe
+# outputs: out_loc_bool_Ok, out_loc_txt_Error, out_loc_txt_Category, out_loc_num_ConfidencePct, out_loc_num_ElapsedMs
+# One email file in, its category and a confidence in percent out, from the classifier trained on YOUR sorted emails
+# (train_triage.py writes triage-model.json; classify_triage.py applies it, with no package to install).
+# ONE 'Run DOS command' action runs the script; its one-line JSON answer is read field by field.
+# The function never throws: it returns a flag and a message, the caller decides (for example: a low confidence goes to a person).
+@@regionColor: '#57FFE1'
+**REGION 1. Outputs first, then the two files the call needs
+SET out_loc_bool_Ok TO False
+SET out_loc_txt_Error TO $''''''
+SET out_loc_txt_Category TO $''''''
+SET out_loc_num_ConfidencePct TO 0
+SET out_loc_num_ElapsedMs TO 0
+SET txt_ModelFile TO $'''%in_loc_txt_ModelFolder%\\triage-model.json'''
+SET txt_Script TO $'''%in_loc_txt_ModelFolder%\\classify_triage.py'''
+SET txt_StdOut TO $''''''
+SET num_ExitCode TO -1
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 2. Guards: the email, the trained model and the script must exist
+IF (File.IfFile.DoesNotExist File: in_loc_txt_EmailFile) THEN
+    SET out_loc_txt_Error TO $'''Email file not found: %in_loc_txt_EmailFile%'''
+    EXIT FUNCTION
+END
+IF (File.IfFile.DoesNotExist File: txt_ModelFile) THEN
+    SET out_loc_txt_Error TO $'''No trained model in %in_loc_txt_ModelFolder%: run train_triage.py there first.'''
+    EXIT FUNCTION
+END
+IF (File.IfFile.DoesNotExist File: txt_Script) THEN
+    SET out_loc_txt_Error TO $'''classify_triage.py not found in %in_loc_txt_ModelFolder%'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 3. Classify: one Python process per email, about 1 s
+# cmd /c drops the first and the last quote of a line that holds several quoted items: the whole line gets one extra pair
+SET txt_Command TO $'''""%in_loc_txt_PythonExe%" "%txt_Script%" --model "%txt_ModelFile%" --file "%in_loc_txt_EmailFile%""'''
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_Start
+Scripting.RunDosCommand.RunDOSCommandAndFailOnTimeout DOSCommandOrApplication: txt_Command WorkingDirectory: in_loc_txt_ModelFolder Timeout: 120 StandardOutput=> txt_StdOut StandardError=> txt_StdErr ExitCode=> num_ExitCode
+ON ERROR
+    SET num_ExitCode TO -1
+END
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_End
+DateTime.Subtract FromDate: date_End SubstractDate: date_Start TimeUnit: DateTime.DifferenceTimeUnit.Seconds TimeDifference=> num_Seconds
+SET num_Milliseconds TO num_Seconds * 1000
+Variables.TruncateNumber.RoundNumber Number: num_Milliseconds DecimalPlaces: 0 Result=> out_loc_num_ElapsedMs
+IF num_ExitCode <> 0 THEN
+    SET out_loc_txt_Error TO $'''The classifier failed (exit code %num_ExitCode%): %txt_StdOut% %txt_StdErr%'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#BDD7EE'
+**REGION 4. Read the answer: {"category": "...", "confidence_pct": 93}
+Text.ParseText.RegexParse Text: txt_StdOut TextToFind: $'''(?<="category"\\s*:\\s*")[^"]+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Category
+Text.ParseText.RegexParse Text: txt_StdOut TextToFind: $'''(?<="confidence_pct"\\s*:\\s*)\\d+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Confidence
+IF lst_Category.Count = 0 OR lst_Confidence.Count = 0 THEN
+    SET out_loc_txt_Error TO $'''Unexpected answer from the classifier: %txt_StdOut%'''
+    EXIT FUNCTION
+END
+Text.ToNumber Text: lst_Confidence[0] Number=> num_Confidence
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 5. Output: the category, its confidence, and the flag that says it worked
+SET out_loc_txt_Category TO lst_Category[0]
+SET out_loc_num_ConfidencePct TO num_Confidence
+SET out_loc_bool_Ok TO True
+**ENDREGION

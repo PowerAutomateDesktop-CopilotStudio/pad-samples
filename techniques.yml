@@ -52,3 +52,8 @@ json-by-regex:
   label: JSON by regex
   title: JSON answers read field by field
   summary: Each field of a JSON answer is read with its own regular expression and checked against the allowed values, so a missing or unexpected field becomes a clear error instead of stopping the flow.
+
+trained-classifier:
+  label: Trained classifier
+  title: A small classifier trained on your own sorted data
+  summary: An embedding model turns each text into a vector; a logistic regression learns your categories from a few dozen sorted examples in seconds on the CPU, and gives a confidence that sends doubtful cases to a person.

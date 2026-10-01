@@ -1,0 +1,6 @@
+Subject: Documentation API
+
+Bonjour,
+Existe-t-il une documentation technique de l'API de votre logiciel de facturation ? Notre DSI souhaiterait savoir si l'on peut pousser les écritures vers notre ERP et quelle est la limite d'appels par minute.
+Merci,
+Romain Jolivet

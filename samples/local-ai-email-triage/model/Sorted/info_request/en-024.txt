@@ -1,0 +1,8 @@
+Subject: Where can I find the API docs?
+
+Hi,
+
+I'm integrating your shipping service into our shop and can't find the API documentation anywhere on the site. Is there a developer guide or a sandbox I can use?
+
+Thanks,
+Kwame Mensah

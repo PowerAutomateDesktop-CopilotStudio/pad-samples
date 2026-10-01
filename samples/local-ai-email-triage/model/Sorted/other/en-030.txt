@@ -1,0 +1,3 @@
+Subject: Your scheduled report is ready
+
+Your weekly report "Overdue invoices by region" was generated on 29 Sep 2026 at 06:00 and is available in the Reports tab. This is an automated message from Ledgerly. Please do not reply.

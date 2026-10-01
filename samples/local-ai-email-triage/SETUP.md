@@ -4,7 +4,7 @@
 
 # Set up: Email triage by a local AI model
 
-Tested on PAD 2.72.183 · v1.0.0
+Tested on PAD 2.72.183 · v1.1.0
 
 *For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
 
@@ -13,7 +13,7 @@ From the path that asks the least to the one that asks the most. Stop at the one
 | Path | You create | Needs | Time |
 |---|---|---|---|
 | **[1. Quick try](#1-quick-try)**<br>Four short emails (two in English, two in French) triaged in one block pasted into Main. No subflow, no input or output to create, no file. | Nothing | Ollama with the model llama3.2:3b | 2 min |
-| **[2. Reusable version](#2-reusable-version)**<br>The function and its example call, in a flow of their own. | 1 local subflow, 3 inputs, 8 outputs | Ollama (free, runs on the PC) with the model llama3.2:3b | 20 min |
+| **[2. Reusable version](#2-reusable-version)**<br>The function and its example call, in a flow of their own. | 1 local subflow, 6 inputs, 13 outputs | Ollama (free, runs on the PC) with the model llama3.2:3b | 20 min |
 | **[3. In your own flow](#3-in-your-own-flow)**<br>Call `Triage_Email` from the flow you are building. | The subflow, its 11 variables and one CALL line | Your flow | Depends on your flow |
 
 ## 1. Quick try
@@ -162,6 +162,7 @@ The same as in 1.1.
 ### 2.2 Prepare the files
 
 - Copy [`input/*`](input/) into `C:\Work\SharedInbox`. Create the folder first. The flow creates C:\Work\SharedInbox\Triaged by itself and never changes the inbox.
+- Copy [`model/*`](model/) into `C:\Work\TriageModel`. Only for the trained classifier (Make it more accurate). The two scripts and 180 sorted emails, one folder per category.
 
 ### 2.3 Create the flow and its subflows
 
@@ -171,6 +172,8 @@ The same as in 1.1.
 | Subflow name | Scope | Role |
 |---|---|---|
 | `Triage_Email` | Local | The reusable part: the text of one email in, its category, urgency, summary, reply flag and 4 details out. Never stops the flow. |
+| `Classify_Email_Trained` | Local | The trained classifier: one email file in, its category and a confidence in percent out. Never stops the flow. *(optional)* |
+| `Triage_Trained` | Global | Example call of the trained classifier on the inbox: a confidence below the threshold goes to to_review. *(optional)* |
 
 > [!WARNING]
 > The scope **Local** is easily lost while you type the name. Check it just before **Save**.
@@ -195,6 +198,19 @@ out_loc_txt_Summary
 out_loc_bool_ReplyNeeded
 out_loc_num_ElapsedMs
 out_loc_num_Tokens
+```
+
+In `Classify_Email_Trained`: **Variables** › **Local** › **+** › **Input** or **Output**, the name only.
+
+```text
+in_loc_txt_EmailFile
+in_loc_txt_ModelFolder
+in_loc_txt_PythonExe
+out_loc_bool_Ok
+out_loc_txt_Error
+out_loc_txt_Category
+out_loc_num_ConfidencePct
+out_loc_num_ElapsedMs
 ```
 
 <img src="assets/variables-pane.png" alt="The function's Variables pane, section Local: Input 3, Output 8" width="300"><br><sub>The function's Variables pane, section Local: Input 3, Output 8</sub>
@@ -405,6 +421,175 @@ Double-click an action to check what the paste set in it:
 
 <img src="assets/invoke-local-llm-advanced.png" alt="Advanced: the instructions, temperature 0, a JSON answer, at most 200 tokens, 120 s" width="420"><br><sub>Advanced: the instructions, temperature 0, a JSON answer, at most 200 tokens, 120 s</sub>
 
+**`Classify_Email_Trained`** *(optional)* ← [`flow/4-Classify_Email_Trained.txt`](flow/4-Classify_Email_Trained.txt). Check: 63 lines, Errors pane empty.
+
+<details><summary>The code (63 lines)</summary>
+
+```text
+# local subflow: Classify_Email_Trained
+# inputs: in_loc_txt_EmailFile, in_loc_txt_ModelFolder, in_loc_txt_PythonExe
+# outputs: out_loc_bool_Ok, out_loc_txt_Error, out_loc_txt_Category, out_loc_num_ConfidencePct, out_loc_num_ElapsedMs
+# One email file in, its category and a confidence in percent out, from the classifier trained on YOUR sorted emails
+# (train_triage.py writes triage-model.json; classify_triage.py applies it, with no package to install).
+# ONE 'Run DOS command' action runs the script; its one-line JSON answer is read field by field.
+# The function never throws: it returns a flag and a message, the caller decides (for example: a low confidence goes to a person).
+@@regionColor: '#57FFE1'
+**REGION 1. Outputs first, then the two files the call needs
+SET out_loc_bool_Ok TO False
+SET out_loc_txt_Error TO $''''''
+SET out_loc_txt_Category TO $''''''
+SET out_loc_num_ConfidencePct TO 0
+SET out_loc_num_ElapsedMs TO 0
+SET txt_ModelFile TO $'''%in_loc_txt_ModelFolder%\\triage-model.json'''
+SET txt_Script TO $'''%in_loc_txt_ModelFolder%\\classify_triage.py'''
+SET txt_StdOut TO $''''''
+SET num_ExitCode TO -1
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 2. Guards: the email, the trained model and the script must exist
+IF (File.IfFile.DoesNotExist File: in_loc_txt_EmailFile) THEN
+    SET out_loc_txt_Error TO $'''Email file not found: %in_loc_txt_EmailFile%'''
+    EXIT FUNCTION
+END
+IF (File.IfFile.DoesNotExist File: txt_ModelFile) THEN
+    SET out_loc_txt_Error TO $'''No trained model in %in_loc_txt_ModelFolder%: run train_triage.py there first.'''
+    EXIT FUNCTION
+END
+IF (File.IfFile.DoesNotExist File: txt_Script) THEN
+    SET out_loc_txt_Error TO $'''classify_triage.py not found in %in_loc_txt_ModelFolder%'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 3. Classify: one Python process per email, about 1 s
+# cmd /c drops the first and the last quote of a line that holds several quoted items: the whole line gets one extra pair
+SET txt_Command TO $'''""%in_loc_txt_PythonExe%" "%txt_Script%" --model "%txt_ModelFile%" --file "%in_loc_txt_EmailFile%""'''
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_Start
+Scripting.RunDosCommand.RunDOSCommandAndFailOnTimeout DOSCommandOrApplication: txt_Command WorkingDirectory: in_loc_txt_ModelFolder Timeout: 120 StandardOutput=> txt_StdOut StandardError=> txt_StdErr ExitCode=> num_ExitCode
+ON ERROR
+    SET num_ExitCode TO -1
+END
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_End
+DateTime.Subtract FromDate: date_End SubstractDate: date_Start TimeUnit: DateTime.DifferenceTimeUnit.Seconds TimeDifference=> num_Seconds
+SET num_Milliseconds TO num_Seconds * 1000
+Variables.TruncateNumber.RoundNumber Number: num_Milliseconds DecimalPlaces: 0 Result=> out_loc_num_ElapsedMs
+IF num_ExitCode <> 0 THEN
+    SET out_loc_txt_Error TO $'''The classifier failed (exit code %num_ExitCode%): %txt_StdOut% %txt_StdErr%'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#BDD7EE'
+**REGION 4. Read the answer: {"category": "...", "confidence_pct": 93}
+Text.ParseText.RegexParse Text: txt_StdOut TextToFind: $'''(?<="category"\\s*:\\s*")[^"]+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Category
+Text.ParseText.RegexParse Text: txt_StdOut TextToFind: $'''(?<="confidence_pct"\\s*:\\s*)\\d+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Confidence
+IF lst_Category.Count = 0 OR lst_Confidence.Count = 0 THEN
+    SET out_loc_txt_Error TO $'''Unexpected answer from the classifier: %txt_StdOut%'''
+    EXIT FUNCTION
+END
+Text.ToNumber Text: lst_Confidence[0] Number=> num_Confidence
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 5. Output: the category, its confidence, and the flag that says it worked
+SET out_loc_txt_Category TO lst_Category[0]
+SET out_loc_num_ConfidencePct TO num_Confidence
+SET out_loc_bool_Ok TO True
+**ENDREGION
+```
+
+</details>
+
+<img src="assets/canvas-trained.png" alt="The trained function after the paste: the answer of the script read field by field" width="640"><br><sub>The trained function after the paste: the answer of the script read field by field</sub>
+
+**`Triage_Trained`** *(optional)* ← [`flow/5-Triage_Trained.txt`](flow/5-Triage_Trained.txt). Check: 75 lines, Errors pane empty.
+
+<details><summary>The code (75 lines)</summary>
+
+```text
+# subflow: Triage_Trained (global)
+# Local AI email triage, trained on your own emails - example call of the local function Classify_Email_Trained.
+# The same job as Main, with the classifier trained on emails a person already sorted (one folder per category):
+# each email is copied into the folder of its category, unless the confidence is below the threshold: then it goes to
+# to_review, for a person. A report lists every decision with its confidence. The inbox is never changed.
+# Before the first run: train the classifier once (python train_triage.py, in the model folder). Run this subflow alone
+# with 'Run from here' on its first action.
+# Regions: cyan = the values to change, red = the guards, purple = the processing, gold = the output.
+@@regionColor: '#57FFE1'
+**REGION 1. Variables: inbox, output folder, model folder, threshold
+# The folder of emails to triage: one .txt file per email (a subject line, an empty line, the body)
+SET txt_InboxFolder TO $'''C:\\Work\\SharedInbox'''
+# The folder that receives the report and one copy of each email, in a subfolder per category
+SET txt_OutputFolder TO $'''C:\\Work\\SharedInbox\\Triaged-trained'''
+# The folder of train_triage.py, classify_triage.py and the triage-model.json the training wrote
+SET txt_ModelFolder TO $'''C:\\Work\\TriageModel'''
+# The Python that runs the classifier (python, py, or a full path to python.exe)
+SET txt_PythonExe TO $'''python'''
+# Below this confidence (in percent) the email goes to to_review instead of its category
+SET num_ThresholdPct TO 80
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 2. Guards: the inbox must exist and hold emails, the output folder is created when missing
+IF (Folder.IfFolderExists.DoesNotExist Path: txt_InboxFolder) THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''Inbox folder not found: %txt_InboxFolder%. Put the sample emails there, or fix txt_InboxFolder in the first region.''' Icon: Display.Icon.ErrorIcon Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+    EXIT Code: 1
+END
+Folder.GetFiles Folder: txt_InboxFolder FileFilter: $'''*.txt''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.Name SortDescending1: False Files=> lst_Emails
+IF lst_Emails.Count = 0 THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''No .txt email in %txt_InboxFolder%.''' Icon: Display.Icon.Warning Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+    EXIT Code: 0
+END
+IF (Folder.IfFolderExists.DoesNotExist Path: txt_OutputFolder) THEN
+    # Create folder needs an existing parent: split the path into parent + name first
+    File.GetPathPart File: txt_OutputFolder Directory=> fold_OutputParent FileName=> txt_OutputFolderName
+    Folder.Create FolderPath: fold_OutputParent FolderName: txt_OutputFolderName Folder=> _fold_Output
+END
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 3. Triage: one call per email; a low confidence goes to a person
+Variables.CreateNewDatatable InputTable: { ^['File', 'Category', 'ConfidencePct', 'Decision', 'Seconds'], ['', '', '', '', ''] } DataTable=> tbl_Report
+SET txt_Lines TO $''''''
+SET num_ToReview TO 0
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_Start
+LOOP FOREACH file_Email IN lst_Emails
+    CALL Classify_Email_Trained in_loc_txt_EmailFile: file_Email.FullName in_loc_txt_ModelFolder: txt_ModelFolder in_loc_txt_PythonExe: txt_PythonExe out_loc_bool_Ok=> bool_Ok out_loc_txt_Error=> txt_Error out_loc_txt_Category=> txt_Category out_loc_num_ConfidencePct=> num_ConfidencePct out_loc_num_ElapsedMs=> num_ElapsedMs
+    SET txt_Decision TO txt_Category
+    IF bool_Ok = False THEN
+        # The function never throws: an email it could not classify goes to a person, with the reason in the report
+        SET txt_Decision TO $'''to_review'''
+        SET txt_Category TO txt_Error
+    ELSE IF num_ConfidencePct < num_ThresholdPct THEN
+        SET txt_Decision TO $'''to_review'''
+    END
+    IF txt_Decision = $'''to_review''' THEN
+        SET num_ToReview TO num_ToReview + 1
+    END
+    SET txt_DecisionFolder TO $'''%txt_OutputFolder%\\%txt_Decision%'''
+    IF (Folder.IfFolderExists.DoesNotExist Path: txt_DecisionFolder) THEN
+        Folder.Create FolderPath: txt_OutputFolder FolderName: txt_Decision Folder=> _fold_Decision
+    END
+    File.Copy Files: file_Email Destination: txt_DecisionFolder IfFileExists: File.IfExists.Overwrite CopiedFiles=> _lst_Copied
+    SET txt_FileName TO file_Email.Name
+    SET num_SecondsRaw TO num_ElapsedMs / 1000
+    Variables.TruncateNumber.RoundNumber Number: num_SecondsRaw DecimalPlaces: 1 Result=> num_Seconds
+    Variables.AddRowToDataTable.AppendRowToDataTable DataTable: tbl_Report RowToAdd: [txt_FileName, txt_Category, num_ConfidencePct, txt_Decision, num_Seconds]
+    Text.AppendLine Text: txt_Lines LineToAppend: $'''%txt_FileName%: %txt_Category% (%num_ConfidencePct% %%) -> %txt_Decision%''' Result=> txt_Lines
+END
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_End
+DateTime.Subtract FromDate: date_End SubstractDate: date_Start TimeUnit: DateTime.DifferenceTimeUnit.Seconds TimeDifference=> num_TotalSeconds
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 4. Output: the report as a CSV file, the decisions on screen
+Variables.DeleteEmptyRowsFromDataTable DataTable: tbl_Report
+SET txt_ReportFile TO $'''%txt_OutputFolder%\\triage-report.csv'''
+File.WriteToCSVFile.WriteCSV VariableToWrite: tbl_Report CSVFile: txt_ReportFile CsvFileEncoding: File.CSVEncoding.UTF8 IncludeColumnNames: True IfFileExists: File.IfFileExists.Overwrite ColumnsSeparator: File.CSVColumnsSeparator.Semicolon
+Variables.TruncateNumber.RoundNumber Number: num_TotalSeconds DecimalPlaces: 0 Result=> num_TotalRounded
+Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''%lst_Emails.Count% emails triaged in %num_TotalRounded% s by the classifier trained on your emails, %num_ToReview% to review (threshold %num_ThresholdPct% %%).
+%txt_Lines%
+Report: %txt_ReportFile%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+**ENDREGION
+```
+
+</details>
+
 Optional: keep the quick try in the same flow, in a global subflow `Test` ([`flow/3-Test.txt`](flow/3-Test.txt)).
 
 ### 2.6 Run and check
@@ -456,12 +641,42 @@ The values to change are in the first region of `Main` (cyan):
 2. Paste [`flow/2-Triage_Email.txt`](flow/2-Triage_Email.txt) into it.
 3. Where you need it, add the CALL line and bind each output to a variable of your flow: [the contract](README.md#use-it-in-your-flow).
 
+## 4. Make it more accurate: train it on your own emails
+
+The language model reads every email without knowing your categories as your team uses them. A **classifier trained on
+emails a person already sorted** learns them. The training does not touch the language model: a small embedding model
+(embeddinggemma, 621 MB, also served by Ollama) turns each email into a vector of 768 numbers, and a logistic regression
+learns, in seconds on the CPU, which vectors belong to which category. It also gives a **confidence you can trust**, so
+that doubtful emails go to a person and the others are sorted alone. Measured on 2026-10-01 on the 192 test emails,
+with the same embedding model, by cross-validation (each email scored by a model that never saw it):
+
+| Sorted emails per category | Accuracy | What it takes |
+|---|---|---|
+| 0 (the language model of this sample) | 68 % | Ollama only |
+| 2 | 74 % | Python, one training run |
+| 4 | 83 % | Python, one training run |
+| 8 | 87 % | Python, one training run |
+| 16 | 90 % | Python, one training run |
+| 24 | 92 % | Python, one training run |
+
+1. Keep the emails a person already sorted, one folder per category. The sample gives 180 fictitious ones in `model\Sorted` (30 per category, none of them in the inbox of the sample): copy `model\*` into `C:\Work\TriageModel`.
+2. Download the embedding model once: `ollama pull embeddinggemma`.
+3. In a command prompt, in `C:\Work\TriageModel`: `python -m venv .venv`, then `.venv\Scripts\activate`, then `pip install numpy scikit-learn`, then `python train_triage.py`. In about a minute it prints the cross-validated accuracy and writes `triage-model.json`.
+4. Create the optional subflows `Classify_Email_Trained` (local) and `Triage_Trained` (global) with their variables, paste them, and run `Triage_Trained` with **Run from here** on its first action. `classify_triage.py` needs Python only, no package.
+5. Below `num_ThresholdPct` (80 by default) an email goes to `to_review`. When a person files it in the right folder of `Sorted`, run `python train_triage.py` again: the classifier learns from the corrections.
+
+<img src="assets/train-console.png" alt="The training run: 180 emails, 91.7 % cross-validated, the model written after 41 s of embedding" width="640"><br><sub>The training run: 180 emails, 91.7 % cross-validated, the model written after 41 s of embedding</sub>
+
+<img src="assets/trained-result.png" alt="Triage_Trained on the 12 sample emails: 12 of 12, each with its confidence" width="480"><br><sub>Triage_Trained on the 12 sample emails: 12 of 12, each with its confidence</sub>
+
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
 | Every email lands in to_review with No answer from the model. | Ollama is not running or the model is missing. Open a command prompt, run ollama list: the model of txt_Model must be listed. If not, run ollama pull llama3.2:3b. |
 | The first email takes 20 to 30 s, the next ones about 6 s. | Normal. The first call loads the model in memory; Ollama keeps it loaded for 5 minutes. |
+| Triage_Trained sends every email to to_review: No trained model in C:\Work\TriageModel. | Run python train_triage.py in that folder first (step 3 of Make it more accurate); it writes triage-model.json. |
+| The report of Triage_Trained says: The classifier failed (exit code 9009). | Windows does not find python. Set txt_PythonExe to py, or to the full path of python.exe, in the first region of Triage_Trained. |
 | The Errors pane lists unknown variables after the paste into the function. | A contract name differs from the table of the step that creates them. Fix the name in the Variables pane (capitals count); the errors disappear. |
 | The new subflow appears under Global, not Local. | The scope is easily lost while typing the name. Delete the subflow and create it again; check Local just before Save. |
 

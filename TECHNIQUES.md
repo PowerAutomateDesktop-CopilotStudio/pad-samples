@@ -13,7 +13,7 @@ A technique is one reusable idea you can carry to another flow. Each sample list
 A local subflow with declared inputs and outputs, called in one CALL line. Copy it into any flow, create its variables, call it.
 
 - [Excel range to an email-ready HTML table](samples/excel-range-to-html-table/README.md): Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.
-- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.
+- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 
 <a id="errors-as-outputs"></a>
 
@@ -22,7 +22,7 @@ A local subflow with declared inputs and outputs, called in one CALL line. Copy 
 The subflow sets every output first, then reports a failure through a flag and a message. The caller decides what to do; the flow never stops inside a reusable part.
 
 - [Excel range to an email-ready HTML table](samples/excel-range-to-html-table/README.md): Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.
-- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.
+- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 
 <a id="powershell-script"></a>
 
@@ -62,7 +62,7 @@ The message is saved as a draft and opened on screen, so a person checks it befo
 
 The Invoke Local LLM action calls a model that runs on the PC (Ollama), with no account and no key; the data never leaves the PC. Temperature 0 gives the same answer to the same text.
 
-- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.
+- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 
 <a id="json-by-regex"></a>
 
@@ -70,4 +70,12 @@ The Invoke Local LLM action calls a model that runs on the PC (Ollama), with no 
 
 Each field of a JSON answer is read with its own regular expression and checked against the allowed values, so a missing or unexpected field becomes a clear error instead of stopping the flow.
 
-- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.
+- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
+
+<a id="trained-classifier"></a>
+
+## A small classifier trained on your own sorted data
+
+An embedding model turns each text into a vector; a logistic regression learns your categories from a few dozen sorted examples in seconds on the CPU, and gives a confidence that sends doubtful cases to a person.
+
+- [Email triage by a local AI model](samples/local-ai-email-triage/README.md): Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.

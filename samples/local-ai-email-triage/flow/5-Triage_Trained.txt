@@ -1,0 +1,81 @@
+# subflow: Triage_Trained (global)
+# Local AI email triage, trained on your own emails - example call of the local function Classify_Email_Trained.
+# The same job as Main, with the classifier trained on emails a person already sorted (one folder per category):
+# each email is copied into the folder of its category, unless the confidence is below the threshold: then it goes to
+# to_review, for a person. A report lists every decision with its confidence. The inbox is never changed.
+# Before the first run: train the classifier once (python train_triage.py, in the model folder). Run this subflow alone
+# with 'Run from here' on its first action.
+# Regions: cyan = the values to change, red = the guards, purple = the processing, gold = the output.
+@@regionColor: '#57FFE1'
+**REGION 1. Variables: inbox, output folder, model folder, threshold
+# The folder of emails to triage: one .txt file per email (a subject line, an empty line, the body)
+SET txt_InboxFolder TO $'''C:\\Work\\SharedInbox'''
+# The folder that receives the report and one copy of each email, in a subfolder per category
+SET txt_OutputFolder TO $'''C:\\Work\\SharedInbox\\Triaged-trained'''
+# The folder of train_triage.py, classify_triage.py and the triage-model.json the training wrote
+SET txt_ModelFolder TO $'''C:\\Work\\TriageModel'''
+# The Python that runs the classifier (python, py, or a full path to python.exe)
+SET txt_PythonExe TO $'''python'''
+# Below this confidence (in percent) the email goes to to_review instead of its category
+SET num_ThresholdPct TO 80
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 2. Guards: the inbox must exist and hold emails, the output folder is created when missing
+IF (Folder.IfFolderExists.DoesNotExist Path: txt_InboxFolder) THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''Inbox folder not found: %txt_InboxFolder%. Put the sample emails there, or fix txt_InboxFolder in the first region.''' Icon: Display.Icon.ErrorIcon Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+    EXIT Code: 1
+END
+Folder.GetFiles Folder: txt_InboxFolder FileFilter: $'''*.txt''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.Name SortDescending1: False Files=> lst_Emails
+IF lst_Emails.Count = 0 THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''No .txt email in %txt_InboxFolder%.''' Icon: Display.Icon.Warning Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+    EXIT Code: 0
+END
+IF (Folder.IfFolderExists.DoesNotExist Path: txt_OutputFolder) THEN
+    # Create folder needs an existing parent: split the path into parent + name first
+    File.GetPathPart File: txt_OutputFolder Directory=> fold_OutputParent FileName=> txt_OutputFolderName
+    Folder.Create FolderPath: fold_OutputParent FolderName: txt_OutputFolderName Folder=> _fold_Output
+END
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 3. Triage: one call per email; a low confidence goes to a person
+Variables.CreateNewDatatable InputTable: { ^['File', 'Category', 'ConfidencePct', 'Decision', 'Seconds'], ['', '', '', '', ''] } DataTable=> tbl_Report
+SET txt_Lines TO $''''''
+SET num_ToReview TO 0
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_Start
+LOOP FOREACH file_Email IN lst_Emails
+    CALL Classify_Email_Trained in_loc_txt_EmailFile: file_Email.FullName in_loc_txt_ModelFolder: txt_ModelFolder in_loc_txt_PythonExe: txt_PythonExe out_loc_bool_Ok=> bool_Ok out_loc_txt_Error=> txt_Error out_loc_txt_Category=> txt_Category out_loc_num_ConfidencePct=> num_ConfidencePct out_loc_num_ElapsedMs=> num_ElapsedMs
+    SET txt_Decision TO txt_Category
+    IF bool_Ok = False THEN
+        # The function never throws: an email it could not classify goes to a person, with the reason in the report
+        SET txt_Decision TO $'''to_review'''
+        SET txt_Category TO txt_Error
+    ELSE IF num_ConfidencePct < num_ThresholdPct THEN
+        SET txt_Decision TO $'''to_review'''
+    END
+    IF txt_Decision = $'''to_review''' THEN
+        SET num_ToReview TO num_ToReview + 1
+    END
+    SET txt_DecisionFolder TO $'''%txt_OutputFolder%\\%txt_Decision%'''
+    IF (Folder.IfFolderExists.DoesNotExist Path: txt_DecisionFolder) THEN
+        Folder.Create FolderPath: txt_OutputFolder FolderName: txt_Decision Folder=> _fold_Decision
+    END
+    File.Copy Files: file_Email Destination: txt_DecisionFolder IfFileExists: File.IfExists.Overwrite CopiedFiles=> _lst_Copied
+    SET txt_FileName TO file_Email.Name
+    SET num_SecondsRaw TO num_ElapsedMs / 1000
+    Variables.TruncateNumber.RoundNumber Number: num_SecondsRaw DecimalPlaces: 1 Result=> num_Seconds
+    Variables.AddRowToDataTable.AppendRowToDataTable DataTable: tbl_Report RowToAdd: [txt_FileName, txt_Category, num_ConfidencePct, txt_Decision, num_Seconds]
+    Text.AppendLine Text: txt_Lines LineToAppend: $'''%txt_FileName%: %txt_Category% (%num_ConfidencePct% %%) -> %txt_Decision%''' Result=> txt_Lines
+END
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_End
+DateTime.Subtract FromDate: date_End SubstractDate: date_Start TimeUnit: DateTime.DifferenceTimeUnit.Seconds TimeDifference=> num_TotalSeconds
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 4. Output: the report as a CSV file, the decisions on screen
+Variables.DeleteEmptyRowsFromDataTable DataTable: tbl_Report
+SET txt_ReportFile TO $'''%txt_OutputFolder%\\triage-report.csv'''
+File.WriteToCSVFile.WriteCSV VariableToWrite: tbl_Report CSVFile: txt_ReportFile CsvFileEncoding: File.CSVEncoding.UTF8 IncludeColumnNames: True IfFileExists: File.IfFileExists.Overwrite ColumnsSeparator: File.CSVColumnsSeparator.Semicolon
+Variables.TruncateNumber.RoundNumber Number: num_TotalSeconds DecimalPlaces: 0 Result=> num_TotalRounded
+Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''%lst_Emails.Count% emails triaged in %num_TotalRounded% s by the classifier trained on your emails, %num_ToReview% to review (threshold %num_ThresholdPct% %%).
+%txt_Lines%
+Report: %txt_ReportFile%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+**ENDREGION

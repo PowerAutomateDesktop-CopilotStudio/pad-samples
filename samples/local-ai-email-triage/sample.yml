@@ -2,15 +2,15 @@
 # Everything the code already says (subflows, contract, UI elements, line counts, settings, regions) is NOT repeated here.
 # Quote any text that holds a comma inside { }.
 id: local-ai-email-triage
-version: 1.0.0             # x.y.z : see CONTRIBUTING, section Versions
+version: 1.1.0             # x.y.z : see CONTRIBUTING, section Versions
 title: Email triage by a local AI model
-summary: Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.
+summary: Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 category: Email
 kind: component            # flow = one job end to end ; component = a reusable local function + an example call
 level: intermediate        # beginner | intermediate | advanced
 minutes: 20                # setup time, from zero to a successful run (the model download included)
-tags: [email, ai, ollama, local-function, json]
-techniques: [local-function, errors-as-outputs, local-llm, json-by-regex]
+tags: [email, ai, ollama, local-function, json, training]
+techniques: [local-function, errors-as-outputs, local-llm, json-by-regex, trained-classifier]
 authors: [Anne (AI agent), HyperAutomatisation]
 
 problem: |
@@ -23,6 +23,8 @@ solution: |
   model returns a small JSON answer: category, urgency, summary, reply needed. Each field is read with its own regular
   expression and the category is checked against the six allowed values; anything else goes to a person. The action is
   wrapped in a **local function** (3 inputs, 8 outputs) that never stops the flow: it returns a flag and a message.
+  Once a person has sorted a few dozen emails per category, an optional second function uses a **classifier trained on
+  them** instead: 92 % right instead of 68 %, about 1 s per email, and a confidence that sends doubtful emails to a person.
 
 design:
   measured: "2026-10-01, on 192 fictitious emails (96 in English, 96 in French, 6 categories, one third deliberately ambiguous), PC without GPU"
@@ -35,23 +37,54 @@ design:
       time: 6 to 8.5 s per email
       result: "68 % right (74 % in English, 61 % in French), 79 % on the clear emails; always valid JSON, always one of the six categories. Weakest on other: internal notices are read as information requests."
       verdict: "All inside PAD, no labelled data, nothing to install but Ollama: the shortest way to a first sort, checked by a person."
-    - approach: Embedding model + a classifier trained on labelled emails (Python)
-      time: 0.3 s per email
-      result: 92 % right (cross-validated), probabilities usable for a review threshold.
-      verdict: "The most accurate, but it needs about 24 labelled emails per category, Python and a script: a second step once a history of sorted emails exists."
+    - approach: "Optional: an embedding model + a classifier trained on your sorted emails (Python)"
+      time: 1.1 to 1.4 s per email
+      result: "92 % right (cross-validated, 24 emails per category), with a confidence you can trust: at 80 % or more, 88 % of the emails are sorted alone and 94 % of those are right. 12 of 12 in the tested run."
+      verdict: "The most accurate, once a history of sorted emails exists. It needs Python and one training run of a minute: see Make it more accurate."
+
+improve:
+  title: "Make it more accurate: train it on your own emails"
+  why: |
+    The language model reads every email without knowing your categories as your team uses them. A **classifier trained on
+    emails a person already sorted** learns them. The training does not touch the language model: a small embedding model
+    (embeddinggemma, 621 MB, also served by Ollama) turns each email into a vector of 768 numbers, and a logistic regression
+    learns, in seconds on the CPU, which vectors belong to which category. It also gives a **confidence you can trust**, so
+    that doubtful emails go to a person and the others are sorted alone. Measured on 2026-10-01 on the 192 test emails,
+    with the same embedding model, by cross-validation (each email scored by a model that never saw it):
+  table:
+    head: [Sorted emails per category, Accuracy, What it takes]
+    rows:
+      - ["0 (the language model of this sample)", 68 %, Ollama only]
+      - [2, 74 %, "Python, one training run"]
+      - [4, 83 %, "Python, one training run"]
+      - [8, 87 %, "Python, one training run"]
+      - [16, 90 %, "Python, one training run"]
+      - [24, 92 %, "Python, one training run"]
+  steps:
+    - "Keep the emails a person already sorted, one folder per category. The sample gives 180 fictitious ones in `model\\Sorted` (30 per category, none of them in the inbox of the sample): copy `model\\*` into `C:\\Work\\TriageModel`."
+    - "Download the embedding model once: `ollama pull embeddinggemma`."
+    - "In a command prompt, in `C:\\Work\\TriageModel`: `python -m venv .venv`, then `.venv\\Scripts\\activate`, then `pip install numpy scikit-learn`, then `python train_triage.py`. In about a minute it prints the cross-validated accuracy and writes `triage-model.json`."
+    - "Create the optional subflows `Classify_Email_Trained` (local) and `Triage_Trained` (global) with their variables, paste them, and run `Triage_Trained` with **Run from here** on its first action. `classify_triage.py` needs Python only, no package."
+    - "Below `num_ThresholdPct` (80 by default) an email goes to `to_review`. When a person files it in the right folder of `Sorted`, run `python train_triage.py` again: the classifier learns from the corrections."
+  pictures:
+    - {file: assets/train-console.png, caption: "The training run: 180 emails, 91.7 % cross-validated, the model written after 41 s of embedding", width: 640}
+    - {file: assets/trained-result.png, caption: "Triage_Trained on the 12 sample emails: 12 of 12, each with its confidence", width: 480}
 
 performance:
   - "Tested run of 2026-10-01: 12 emails triaged in 157 s by llama3.2:3b on a PC without GPU, 5.2 to 8.3 s per email; the first call takes 25 s while the model loads."
   - "Quick try of 2026-10-01: 4 emails in 38 s, first call included."
   - "Measured on 2026-10-01 outside PAD, with the same instructions and settings, on the 192 test emails: median 8.5 s per email, about 380 tokens per email, a valid JSON answer 192 times out of 192."
+  - "Trained classifier, run of 2026-10-01: training on 180 emails in 41 s; Triage_Trained on the 12 sample emails in 77 s in the designer, 1.1 to 1.4 s per call (4.5 s for the first one), 12 of 12 right, 0 to review."
 
 limits:
   - "Needs Ollama on the PC and one model downloaded once (llama3.2:3b is about 2 GB). The flow checks nothing about the installation: a missing model or a stopped Ollama gives the message No answer from the model."
   - "A small model makes mistakes: 68 % right on the test set of 192 emails, 49 % on the ambiguous ones, and it rarely chooses other. In the tested run, a notice of site closure went to info_request and a request for rates to sales_offer (10 of 12 right). Keep a person in the loop: the flow copies, it never deletes, moves or answers."
-  - "The model gives no reliable confidence score. What it cannot place, or places outside the six categories, goes to to_review; everything else is trusted as it is."
+  - "The language model gives no reliable confidence score. What it cannot place, or places outside the six categories, goes to to_review; everything else is trusted as it is. The trained classifier gives one."
   - "Summaries are asked in English; the small model sometimes answers in the language of the email (2 of 12 in the tested run)."
   - "The sample reads emails saved as .txt files. Reading Outlook directly (Retrieve email messages) was not tested with this sample."
   - "Tested on a PC without GPU, with llama3.2:3b. Other models only change the value of txt_Model; their speed and accuracy were not tested in PAD."
+  - "The trained classifier needs Python 3.10 or later; numpy and scikit-learn only for the training. Its accuracy depends on your history of sorted emails: the 92 % were measured on fictitious emails written for the sample, not on a real inbox."
+  - "The trained classifier gives no urgency and no summary: only the category and its confidence. Use both functions when you need both."
 
 pictures:
   result: {file: assets/result.png, caption: "The message at the end of Main: the decision for each of the 12 sample emails"}
@@ -59,6 +92,7 @@ pictures:
   canvas:
     2-Triage_Email.txt: {file: assets/canvas.png, caption: "The function after the paste: the guard and the Invoke Local LLM action"}
     1-Main.txt: {file: assets/canvas-main.png, caption: "Main after the paste: the settings to change"}
+    4-Classify_Email_Trained.txt: {file: assets/canvas-trained.png, caption: "The trained function after the paste: the answer of the script read field by field"}
   actions:
     2-Triage_Email.txt:
       - {file: assets/invoke-local-llm.png, caption: "Invoke Local LLM: the server, the model and the text of the email come from the inputs", width: 420}
@@ -75,6 +109,9 @@ files:
   - put: input/*
     into: C:\Work\SharedInbox
     note: Create the folder first. The flow creates C:\Work\SharedInbox\Triaged by itself and never changes the inbox.
+  - put: model/*
+    into: C:\Work\TriageModel
+    note: Only for the trained classifier (Make it more accurate). The two scripts and 180 sorted emails, one folder per category.
 
 quick_try:
   file: 3-Test.txt
@@ -92,6 +129,8 @@ subflows:
   1-Main.txt: {does: "Example call: reads each .txt email of the inbox, calls the function, copies the email into the folder of its category and writes a CSV report."}
   2-Triage_Email.txt: {does: "The reusable part: the text of one email in, its category, urgency, summary, reply flag and 4 details out. Never stops the flow."}
   3-Test.txt: {does: "The quick try: four emails written in the block, triaged by the same action and shown in one message.", optional: true}
+  4-Classify_Email_Trained.txt: {does: "The trained classifier: one email file in, its category and a confidence in percent out. Never stops the flow.", optional: true}
+  5-Triage_Trained.txt: {does: "Example call of the trained classifier on the inbox: a confidence below the threshold goes to to_review.", optional: true}
 
 variables:
   in_loc_txt_EmailText: {holds: "The text of the email: subject line, empty line, body", e.g: "Subject: Payment received, order 88213 ..."}
@@ -103,8 +142,12 @@ variables:
   out_loc_txt_Urgency: {holds: "low, normal or high", e.g: high}
   out_loc_txt_Summary: {holds: One sentence written by the model, e.g: No update on standing desk order SD-55102 after three weeks}
   out_loc_bool_ReplyNeeded: {holds: True when the sender expects an answer, e.g: 'True'}
-  out_loc_num_ElapsedMs: {holds: Time taken by the call to the model, e.g: '6300'}
+  out_loc_num_ElapsedMs: {holds: Time taken by the call (the model or the classifier), e.g: '6300'}
   out_loc_num_Tokens: {holds: Tokens read and written by the model, e.g: 'about 380'}
+  in_loc_txt_EmailFile: {holds: Full path of one email saved as .txt, e.g: 'C:\Work\SharedInbox\email-05.txt'}
+  in_loc_txt_ModelFolder: {holds: The folder of the scripts and of triage-model.json, e.g: 'C:\Work\TriageModel'}
+  in_loc_txt_PythonExe: {holds: "The Python that runs the classifier: python, py or a full path", e.g: python}
+  out_loc_num_ConfidencePct: {holds: "How sure the classifier is, in whole percent", e.g: '98'}
 
 run:
   subflow: Main
@@ -119,6 +162,10 @@ troubleshooting:
     do: "Ollama is not running or the model is missing. Open a command prompt, run ollama list: the model of txt_Model must be listed. If not, run ollama pull llama3.2:3b."
   - when: The first email takes 20 to 30 s, the next ones about 6 s.
     do: Normal. The first call loads the model in memory; Ollama keeps it loaded for 5 minutes.
+  - when: "Triage_Trained sends every email to to_review: No trained model in C:\\Work\\TriageModel."
+    do: Run python train_triage.py in that folder first (step 3 of Make it more accurate); it writes triage-model.json.
+  - when: "The report of Triage_Trained says: The classifier failed (exit code 9009)."
+    do: Windows does not find python. Set txt_PythonExe to py, or to the full path of python.exe, in the first region of Triage_Trained.
   - when: The Errors pane lists unknown variables after the paste into the function.
     do: A contract name differs from the table of the step that creates them. Fix the name in the Variables pane (capitals count); the errors disappear.
   - when: The new subflow appears under Global, not Local.
@@ -127,3 +174,4 @@ troubleshooting:
 tested:
   - {pad: 2.72.183, date: 2026-10-01, path: Full flow, result: pass}
   - {pad: 2.72.183, date: 2026-10-01, path: Quick try, result: pass}
+  - {pad: 2.72.183, date: 2026-10-01, path: Trained classifier (Triage_Trained), result: pass}

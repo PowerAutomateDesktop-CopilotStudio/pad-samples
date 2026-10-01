@@ -1,0 +1,5 @@
+Subject: Votre mot de passe expire dans 5 jours
+
+Bonjour,
+Votre mot de passe de session expirera le 5 octobre. Pensez à le modifier depuis le portail avant cette date pour éviter un blocage de votre compte.
+Service informatique - message automatique

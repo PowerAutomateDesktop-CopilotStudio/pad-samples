@@ -1,0 +1,13 @@
+﻿File;Category;ConfidencePct;Decision;Seconds
+email-01.txt;other;99;other;4.5
+email-02.txt;other;100;other;1.2
+email-03.txt;invoice;100;invoice;1.2
+email-04.txt;invoice;100;invoice;1.3
+email-05.txt;complaint;100;complaint;1.3
+email-06.txt;sales_offer;100;sales_offer;1.4
+email-07.txt;sales_offer;100;sales_offer;1.3
+email-08.txt;complaint;100;complaint;1.4
+email-09.txt;appointment;100;appointment;1.2
+email-10.txt;appointment;100;appointment;1.2
+email-11.txt;info_request;100;info_request;1.1
+email-12.txt;info_request;98;info_request;1.3
