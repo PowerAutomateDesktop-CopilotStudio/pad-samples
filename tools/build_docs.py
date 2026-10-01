@@ -107,6 +107,8 @@ class Subflow:
             v = s.group(2).strip()
             if v.startswith("$'''") and v.endswith("'''"):
                 v = v[4:-3].replace("\\\\", "\\").replace("\\'", "'").replace("\\%", "%")
+            elif v.startswith("$'''"):  # a text on several lines: its first line, then an ellipsis
+                v = v[4:].replace("\\\\", "\\").replace("\\'", "'").replace("\\%", "%") + " …"
             out.append((s.group(1), v, comment))
         return out
 
@@ -202,8 +204,10 @@ class Sample:
         self.functions = [s for s in self.subs if s.local]
         self.version = str(card.get("version", ""))
         self.zip = f"{card['id']}-v{self.version}"
-        self.n_in = sum(1 for c in self.contract if c[1] == "Input") + sum(1 for v in self.glob_vars if v.startswith("in_"))
-        self.n_out = sum(1 for c in self.contract if c[1] == "Output") + sum(1 for v in self.glob_vars if v.startswith("out_"))
+        # what the main path asks to create: the optional subflows (and their variables) are counted apart
+        needed = [c for c in self.contract if c[0].file not in self.optional]
+        self.n_in = sum(1 for c in needed if c[1] == "Input") + sum(1 for v in self.glob_vars if v.startswith("in_"))
+        self.n_out = sum(1 for c in needed if c[1] == "Output") + sum(1 for v in self.glob_vars if v.startswith("out_"))
         self.n_vars = self.n_in + self.n_out
 
     # --- the checks: a card that disagrees with its code never produces a page ---
