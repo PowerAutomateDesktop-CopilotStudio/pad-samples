@@ -28,6 +28,15 @@ solution: |
 #       result: What it gives.
 #       verdict: Why it was kept or rejected.
 
+# improve:                             # optional: how to make it better (a measured gain), a section of the overview AND of the setup
+#   title: Make it more accurate - train it on your own data
+#   why: |
+#     What it gains, measured, and what it costs.
+#   table: {head: [Examples per category, Accuracy], rows: [[2, 74 %], [24, 92 %]]}
+#   steps:
+#     - What to do first.
+#   pictures: [{file: assets/train.png, caption: "..."}]
+
 # performance:
 #   - "Measured time, with the date and the size of the input."
 

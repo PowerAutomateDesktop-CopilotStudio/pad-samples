@@ -261,6 +261,13 @@ class Sample:
         for alt in c.get("design", {}).get("alternatives", []):
             if set(alt) - {"approach", "time", "result", "verdict"}:
                 err.append(f"design.alternatives: unknown keys in {alt} (quote a text that holds a comma)")
+        if imp := c.get("improve"):
+            if not isinstance(imp, dict) or set(imp) - {"title", "why", "table", "steps", "pictures"} \
+                    or not imp.get("title") or not imp.get("steps"):
+                err.append("improve: {title, steps, why (optional), table (optional: head, rows), pictures (optional)}")
+            elif imp.get("table") and (set(imp["table"]) != {"head", "rows"}
+                                        or any(len(r) != len(imp["table"]["head"]) for r in imp["table"]["rows"])):
+                err.append("improve.table: head (the column titles) and rows (one list per row, as many cells as head)")
         for m in c.get("prerequisites", []):
             if not isinstance(m, dict) or set(m) - {"title", "why", "how", "picture"} or not m.get("title") or not m.get("how"):
                 err.append("prerequisites: each entry is {title, how, why (optional), picture (optional)}")
@@ -399,6 +406,13 @@ class Sample:
                    "| Approach | Time | Result | Verdict |", "|---|---|---|---|"]
             md += [f"| {a['approach']} | {a['time']} | {a['result']} | {a['verdict']} |" for a in design["alternatives"]]
             md.append("")
+        if imp := c.get("improve"):
+            md += [f"## {imp['title']}", ""]
+            if imp.get("why"):
+                md += [imp["why"].strip(), ""]
+            md += self.improve_table()
+            md += ["How, in short:", ""] + [f"{i}. {s}" for i, s in enumerate(imp["steps"], 1)] + [""]
+            md += [f"Step by step: [{imp['title']}](SETUP.md#{anchor(str(len(self.ladder()) + 1) + ' ' + imp['title'])}).", ""]
         if c.get("performance"):
             md += ["## Performance", ""] + [f"- {p}" for p in c["performance"]] + [""]
         if c.get("limits"):
@@ -546,6 +560,15 @@ class Sample:
                        f"3. Where you need it, add the CALL line and bind each output to a variable of your flow: "
                        f"[the contract](README.md#use-it-in-your-flow).", ""]
 
+        if imp := c.get("improve"):
+            md += [f"## {len(ladder) + 1}. {imp['title']}", ""]
+            if imp.get("why"):
+                md += [imp["why"].strip(), ""]
+            md += self.improve_table()
+            md += [f"{i}. {s}" for i, s in enumerate(imp["steps"], 1)] + [""]
+            for p in imp.get("pictures", []):
+                md += [fig(p, p.get("width", 480)), ""]
+
         if c.get("troubleshooting"):
             md += ["## Troubleshooting", "", "| Symptom | Fix |", "|---|---|"]
             md += [f"| {t['when']} | {t['do']} |" for t in c["troubleshooting"]]
@@ -556,6 +579,13 @@ class Sample:
     def files_lines(self):
         return [f"- Copy [`{f['put']}`]({f['put'].replace('*', '')}) into `{f['into']}`. {f.get('note', '')}"
                 for f in self.card.get("files", [])] + [""]
+
+    def improve_table(self):
+        t = (self.card.get("improve") or {}).get("table")
+        if not t:
+            return []
+        return (["| " + " | ".join(t["head"]) + " |", "|" + "---|" * len(t["head"])]
+                + ["| " + " | ".join(str(x) for x in row) + " |" for row in t["rows"]] + [""])
 
     def prerequisite_lines(self):
         """What must be on the PC before any path works (an app, a model), once."""
