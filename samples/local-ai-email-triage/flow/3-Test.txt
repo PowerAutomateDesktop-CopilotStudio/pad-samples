@@ -1,0 +1,92 @@
+# subflow: Test (global)
+# Local AI email triage - the quick try, AUTONOMOUS: four short emails (two in English, two in French) are triaged by a
+# model served on this PC by Ollama. Each one gets a category, an urgency and a one-sentence summary; the four answers
+# are shown in one message. Nothing to create, no file, no other application: Ollama and one model are enough.
+# NO input / output variable: the settings are plain SET lines in the first region, so this subflow can be pasted alone
+# into any empty Main. Or run it here with 'Run from here' on its first action.
+# The reusable building block is the local function Triage_Email (same instructions, same action), called by Main.
+# Regions: cyan values, red guards, purple processing, gold output.
+@@regionColor: '#57FFE1'
+**REGION 1. Variables: the local model and four sample emails, the only lines to change
+# The Ollama endpoint on this PC and the model it serves (run: ollama pull llama3.2:3b, once)
+SET txt_Endpoint TO $'''http://localhost:11434/v1'''
+SET txt_Model TO $'''llama3.2:3b'''
+SET txt_Email1 TO $'''Subject: Invoice 2026-118 for the September maintenance
+
+Hello, please find attached invoice 2026-118 for the maintenance visits of September: 1,480.00 EUR, payable within 30 days by bank transfer. Kind regards, Laura Benning, Northgate Facilities'''
+SET txt_Email2 TO $'''Objet : Commande 55721 toujours pas livrée
+
+Bonjour, j\'ai commandé deux fauteuils le 2 septembre avec une livraison promise sous 10 jours. Trois semaines plus tard, rien, et votre service client ne répond pas. Je demande une livraison cette semaine ou le remboursement complet. Hélène Marchetti'''
+SET txt_Email3 TO $'''Subject: Can we move Thursday?
+
+Hi Tom, something came up on Thursday afternoon. Could we move our project review to Friday at 10:00, same room? Thanks, Priya'''
+SET txt_Email4 TO $'''Objet : Doublez vos avis clients en 30 jours
+
+Bonjour, notre agence Vitrineo aide les commerces de proximité à obtenir plus d\'avis positifs sur internet. Je vous propose une démonstration gratuite de 20 minutes la semaine prochaine. Bien à vous, Julien Ferrand'''
+SET lst_Emails TO [txt_Email1, txt_Email2, txt_Email3, txt_Email4]
+# The same instructions as in Triage_Email: six categories, three urgencies, a summary in English
+SET txt_SystemPrompt TO $'''You triage the emails of a shared inbox. The email can be in any language. Answer with one JSON object only, in this form: {"category": "...", "urgency": "...", "summary": "...", "reply_needed": true}
+category, exactly one of: invoice (billing and payments: invoice, payment reminder or confirmation, quote, purchase order, bank details, credit note), complaint (an unhappy customer: late delivery, defect, poor service, disputed bill, refund after a problem), info_request (a question asking for information: prices, hours, documents, availability, how to), appointment (propose, confirm, move or cancel a meeting, a call or a visit), sales_offer (an unsolicited commercial offer, a partnership pitch, cold outreach, a recruiter), other (anything else: internal notice, newsletter, thank-you note, out-of-office, FYI, system notification).
+Choose the category of the main intent of the sender, not of every topic mentioned.
+urgency, exactly one of: low, normal, high.
+summary: one sentence in English, at most 20 words, without double quotes.
+reply_needed: true when the sender expects an answer, else false.'''
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 2. Triage: one call per email, temperature 0, JSON answer read field by field
+SET txt_Lines TO $''''''
+SET num_Index TO 0
+SET bool_Failed TO False
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_Start
+LOOP FOREACH txt_Email IN lst_Emails
+    SET num_Index TO num_Index + 1
+    LLM.InvokeLLM EndpointUrl: txt_Endpoint ModelConfiguration: txt_Model SystemPrompt: txt_SystemPrompt UserPrompt: txt_Email Temperature: 0 ResponseFormat: LLM.ResponseFormatType.Json MaxTokens: 200 Timeout: 120 Response=> txt_Json PromptTokens=> num_PromptTokens CompletionTokens=> num_CompletionTokens
+    ON ERROR
+        SET bool_Failed TO True
+    END
+    IF bool_Failed = True THEN
+        EXIT LOOP
+    END
+    Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="category"\\s*:\\s*")[^"]+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Category
+    Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="urgency"\\s*:\\s*")[^"]+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Urgency
+    Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="summary"\\s*:\\s*")[^"]*''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Summary
+    SET txt_Category TO $'''?'''
+    SET txt_Urgency TO $'''?'''
+    SET txt_Summary TO $''''''
+    IF lst_Category.Count > 0 THEN
+        SET txt_Category TO lst_Category[0]
+    END
+    IF lst_Urgency.Count > 0 THEN
+        SET txt_Urgency TO lst_Urgency[0]
+    END
+    IF lst_Summary.Count > 0 THEN
+        # The summary is JSON text: an accent can arrive as an escape sequence, decoded here through a one-key JSON object
+        SET txt_Summary TO lst_Summary[0]
+        SET bool_BadSummary TO False
+        SET txt_SummaryJson TO $'''{"s": "%lst_Summary[0]%"}'''
+        Variables.ConvertJsonToCustomObject Json: txt_SummaryJson CustomObject=> obj_Summary
+        ON ERROR
+            SET bool_BadSummary TO True
+        END
+        IF bool_BadSummary = False THEN
+            SET txt_Summary TO obj_Summary['s']
+        END
+    END
+    Text.AppendLine Text: txt_Lines LineToAppend: $'''%num_Index%. %txt_Category% (%txt_Urgency%) - %txt_Summary%''' Result=> txt_Lines
+END
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_End
+DateTime.Subtract FromDate: date_End SubstractDate: date_Start TimeUnit: DateTime.DifferenceTimeUnit.Seconds TimeDifference=> num_Seconds
+Variables.TruncateNumber.RoundNumber Number: num_Seconds DecimalPlaces: 0 Result=> num_SecondsRounded
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 3. Guard: no answer means Ollama is not running or the model is missing
+IF bool_Failed = True THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''No answer from the model %txt_Model% at %txt_Endpoint%. Start Ollama, run: ollama pull %txt_Model%, then run again.''' Icon: Display.Icon.ErrorIcon Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+    EXIT Code: 0
+END
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 4. Output: the four decisions on screen
+Display.ShowMessageDialog.ShowMessage Title: $'''Local AI email triage''' Message: $'''4 emails triaged in %num_SecondsRounded% s by %txt_Model%, on this PC: no email was sent out.
+%txt_Lines%''' Icon: Display.Icon.Information Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> _txt_ButtonPressed
+**ENDREGION

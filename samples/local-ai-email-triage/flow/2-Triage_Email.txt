@@ -1,0 +1,99 @@
+# local subflow: Triage_Email
+# inputs: in_loc_txt_EmailText, in_loc_txt_Endpoint, in_loc_txt_Model
+# outputs: out_loc_bool_Ok, out_loc_txt_Error, out_loc_txt_Category, out_loc_txt_Urgency, out_loc_txt_Summary, out_loc_bool_ReplyNeeded, out_loc_num_ElapsedMs, out_loc_num_Tokens
+# One email in, its triage out: category, urgency, a one-sentence summary and whether the sender expects a reply.
+# ONE 'Invoke Local LLM' action asks a model served on this PC by Ollama (no account, no key, the email never leaves the PC).
+# The answer is JSON; each field is read with a regular expression, so a missing or strange field gives a clear error
+# instead of stopping the flow. The function never throws: it returns a flag and a message, the caller decides.
+@@regionColor: '#57FFE1'
+**REGION 1. Outputs first, then the instructions given to the model
+SET out_loc_txt_Category TO $''''''
+SET out_loc_txt_Urgency TO $''''''
+SET out_loc_txt_Summary TO $''''''
+SET out_loc_bool_ReplyNeeded TO False
+SET out_loc_bool_Ok TO False
+SET out_loc_txt_Error TO $''''''
+SET out_loc_num_ElapsedMs TO 0
+SET out_loc_num_Tokens TO 0
+SET bool_Failed TO False
+SET txt_Json TO $''''''
+# The six categories are named in the prompt AND checked after the answer: a model can answer outside the list
+SET txt_SystemPrompt TO $'''You triage the emails of a shared inbox. The email can be in any language. Answer with one JSON object only, in this form: {"category": "...", "urgency": "...", "summary": "...", "reply_needed": true}
+category, exactly one of: invoice (billing and payments: invoice, payment reminder or confirmation, quote, purchase order, bank details, credit note), complaint (an unhappy customer: late delivery, defect, poor service, disputed bill, refund after a problem), info_request (a question asking for information: prices, hours, documents, availability, how to), appointment (propose, confirm, move or cancel a meeting, a call or a visit), sales_offer (an unsolicited commercial offer, a partnership pitch, cold outreach, a recruiter), other (anything else: internal notice, newsletter, thank-you note, out-of-office, FYI, system notification).
+Choose the category of the main intent of the sender, not of every topic mentioned.
+urgency, exactly one of: low, normal, high.
+summary: one sentence in English, at most 20 words, without double quotes.
+reply_needed: true when the sender expects an answer, else false.'''
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 2. Guard: an empty email is not sent to the model
+Text.Trim Text: in_loc_txt_EmailText TrimOption: Text.TrimOption.Both TrimmedText=> txt_Trimmed
+IF txt_Trimmed = $'''''' THEN
+    SET out_loc_txt_Error TO $'''The email is empty.'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#D9C3E9'
+**REGION 3. Ask the local model: one call, JSON answer, temperature 0 (the same email always gets the same answer)
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_Start
+LLM.InvokeLLM EndpointUrl: in_loc_txt_Endpoint ModelConfiguration: in_loc_txt_Model SystemPrompt: txt_SystemPrompt UserPrompt: in_loc_txt_EmailText Temperature: 0 ResponseFormat: LLM.ResponseFormatType.Json MaxTokens: 200 Timeout: 120 Response=> txt_Json PromptTokens=> num_PromptTokens CompletionTokens=> num_CompletionTokens
+ON ERROR
+    SET bool_Failed TO True
+END
+DateTime.GetCurrentDateTime.Local DateTimeFormat: DateTime.DateTimeFormat.DateAndTime CurrentDateTime=> date_End
+DateTime.Subtract FromDate: date_End SubstractDate: date_Start TimeUnit: DateTime.DifferenceTimeUnit.Seconds TimeDifference=> num_Seconds
+SET num_Milliseconds TO num_Seconds * 1000
+Variables.TruncateNumber.RoundNumber Number: num_Milliseconds DecimalPlaces: 0 Result=> out_loc_num_ElapsedMs
+IF bool_Failed = True THEN
+    SET out_loc_txt_Error TO $'''No answer from the model %in_loc_txt_Model% at %in_loc_txt_Endpoint%. Is Ollama running, and was the model pulled?'''
+    EXIT FUNCTION
+END
+SET out_loc_num_Tokens TO num_PromptTokens + num_CompletionTokens
+**ENDREGION
+@@regionColor: '#BDD7EE'
+**REGION 4. Read the answer: one regular expression per field, a missing field stays empty
+Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="category"\\s*:\\s*")[^"]+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Category
+Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="urgency"\\s*:\\s*")[^"]+''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Urgency
+Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="summary"\\s*:\\s*")[^"]*''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Summary
+Text.ParseText.RegexParse Text: txt_Json TextToFind: $'''(?<="reply_needed"\\s*:\\s*)(true|false)''' StartingPosition: 0 IgnoreCase: True Matches=> lst_Reply
+SET txt_Category TO $''''''
+IF lst_Category.Count > 0 THEN
+    Text.ChangeCase Text: lst_Category[0] NewCase: Text.CaseOption.LowerCase Result=> txt_Lower
+    Text.Trim Text: txt_Lower TrimOption: Text.TrimOption.Both TrimmedText=> txt_Category
+END
+IF lst_Urgency.Count > 0 THEN
+    Text.ChangeCase Text: lst_Urgency[0] NewCase: Text.CaseOption.LowerCase Result=> out_loc_txt_Urgency
+END
+IF lst_Summary.Count > 0 THEN
+    # The summary is JSON text: an accent can arrive as an escape sequence, decoded here through a one-key JSON object
+    SET out_loc_txt_Summary TO lst_Summary[0]
+    SET bool_BadSummary TO False
+    SET txt_SummaryJson TO $'''{"s": "%lst_Summary[0]%"}'''
+    Variables.ConvertJsonToCustomObject Json: txt_SummaryJson CustomObject=> obj_Summary
+    ON ERROR
+        SET bool_BadSummary TO True
+    END
+    IF bool_BadSummary = False THEN
+        SET out_loc_txt_Summary TO obj_Summary['s']
+    END
+END
+IF lst_Reply.Count > 0 THEN
+    Text.ChangeCase Text: lst_Reply[0] NewCase: Text.CaseOption.LowerCase Result=> txt_Reply
+    IF txt_Reply = $'''true''' THEN
+        SET out_loc_bool_ReplyNeeded TO True
+    END
+END
+**ENDREGION
+@@regionColor: '#F4B6B6'
+**REGION 5. Check: only the six categories are accepted, anything else goes to a person
+Text.ParseText.RegexParse Text: txt_Category TextToFind: $'''^(invoice|complaint|info_request|appointment|sales_offer|other)$''' StartingPosition: 0 IgnoreCase: False Matches=> lst_Valid
+IF lst_Valid.Count = 0 THEN
+    SET out_loc_txt_Error TO $'''Unexpected answer from the model: %txt_Json%'''
+    EXIT FUNCTION
+END
+**ENDREGION
+@@regionColor: '#FFD966'
+**REGION 6. Output: the category, and the flag that says the triage worked
+SET out_loc_txt_Category TO txt_Category
+SET out_loc_bool_Ok TO True
+**ENDREGION

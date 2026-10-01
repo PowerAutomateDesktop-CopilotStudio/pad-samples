@@ -1,0 +1,13 @@
+﻿File;Category;Urgency;ReplyNeeded;Summary;Seconds
+email-01.txt;info_request;low;False;Site fermé le 14 octobre pour travaux électriques, télétravail obligatoire;25.1
+email-02.txt;other;normal;False;Office closed on Friday 3 October, work from home;5.6
+email-03.txt;invoice;low;False;Virement of 1280€ for order 4471 received;6.4
+email-04.txt;invoice;low;False;Payment received for order 88213;5.8
+email-05.txt;complaint;high;True;No update on standing desk order SD-55102 after three weeks;6.3
+email-06.txt;sales_offer;high;False;Boost your local visibility with Clicmarée agency;7.0
+email-07.txt;sales_offer;normal;False;Nimbalo offers to reduce cloud bill by 35% without changing stack.;6.7
+email-08.txt;complaint;high;True;No package arrived after 5-day delivery promise and tracking is blocked for 10 days.;7.5
+email-09.txt;appointment;normal;False;Confirming meeting on Tuesday 7 October at 2pm;5.7
+email-10.txt;appointment;normal;False;Discuss project at Rezé on Tuesday at 10h;6.5
+email-11.txt;info_request;low;True;Opening hours over the holidays?;5.2
+email-12.txt;sales_offer;normal;True;Tarifs pour entretien de 12 véhicules par an et délais de prise en charge;8.3

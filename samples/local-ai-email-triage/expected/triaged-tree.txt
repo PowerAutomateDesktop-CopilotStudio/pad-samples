@@ -1,0 +1,20 @@
+C:\Work\SharedInbox\Triaged
++-- appointment
+|   +-- email-09.txt
+|   +-- email-10.txt
++-- complaint
+|   +-- email-05.txt
+|   +-- email-08.txt
++-- info_request
+|   +-- email-01.txt
+|   +-- email-11.txt
++-- invoice
+|   +-- email-03.txt
+|   +-- email-04.txt
++-- other
+|   +-- email-02.txt
++-- sales_offer
+|   +-- email-06.txt
+|   +-- email-07.txt
+|   +-- email-12.txt
++-- triage-report.csv

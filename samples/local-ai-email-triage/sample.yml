@@ -1,0 +1,129 @@
+# The card of this sample. tools/build_docs.py writes README.md (overview) and SETUP.md (step by step) from it and from flow/.
+# Everything the code already says (subflows, contract, UI elements, line counts, settings, regions) is NOT repeated here.
+# Quote any text that holds a comma inside { }.
+id: local-ai-email-triage
+version: 1.0.0             # x.y.z : see CONTRIBUTING, section Versions
+title: Email triage by a local AI model
+summary: Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC.
+category: Email
+kind: component            # flow = one job end to end ; component = a reusable local function + an example call
+level: intermediate        # beginner | intermediate | advanced
+minutes: 20                # setup time, from zero to a successful run (the model download included)
+tags: [email, ai, ollama, local-function, json]
+techniques: [local-function, errors-as-outputs, local-llm, json-by-regex]
+authors: [Anne (AI agent), HyperAutomatisation]
+
+problem: |
+  A shared inbox (orders, accounts, support) must be sorted before anyone can answer: invoices to accounting, complaints
+  first, sales pitches aside. Rules on keywords (*If text contains*) miss most of it: they were right for **46 %** of a test
+  set of 192 emails. A cloud AI service reads better but sends every email, with its names and amounts, out of the company.
+
+solution: |
+  One *Invoke Local LLM* action asks a language model that runs **on the PC** (Ollama, free, no account, no key). The
+  model returns a small JSON answer: category, urgency, summary, reply needed. Each field is read with its own regular
+  expression and the category is checked against the six allowed values; anything else goes to a person. The action is
+  wrapped in a **local function** (3 inputs, 8 outputs) that never stops the flow: it returns a flag and a message.
+
+design:
+  measured: "2026-10-01, on 192 fictitious emails (96 in English, 96 in French, 6 categories, one third deliberately ambiguous), PC without GPU"
+  alternatives:
+    - approach: "Native: keyword rules (If text contains)"
+      time: instant
+      result: 46 % right. Every email that names no keyword falls into other.
+      verdict: Use it for a handful of fixed senders or subjects, not for free text.
+    - approach: "**Chosen: Invoke Local LLM with llama3.2:3b (2 GB), nothing to train**"
+      time: 6 to 8.5 s per email
+      result: "68 % right (74 % in English, 61 % in French), 79 % on the clear emails; always valid JSON, always one of the six categories. Weakest on other: internal notices are read as information requests."
+      verdict: "All inside PAD, no labelled data, nothing to install but Ollama: the shortest way to a first sort, checked by a person."
+    - approach: Embedding model + a classifier trained on labelled emails (Python)
+      time: 0.3 s per email
+      result: 92 % right (cross-validated), probabilities usable for a review threshold.
+      verdict: "The most accurate, but it needs about 24 labelled emails per category, Python and a script: a second step once a history of sorted emails exists."
+
+performance:
+  - "Tested run of 2026-10-01: 12 emails triaged in 157 s by llama3.2:3b on a PC without GPU, 5.2 to 8.3 s per email; the first call takes 25 s while the model loads."
+  - "Quick try of 2026-10-01: 4 emails in 38 s, first call included."
+  - "Measured on 2026-10-01 outside PAD, with the same instructions and settings, on the 192 test emails: median 8.5 s per email, about 380 tokens per email, a valid JSON answer 192 times out of 192."
+
+limits:
+  - "Needs Ollama on the PC and one model downloaded once (llama3.2:3b is about 2 GB). The flow checks nothing about the installation: a missing model or a stopped Ollama gives the message No answer from the model."
+  - "A small model makes mistakes: 68 % right on the test set of 192 emails, 49 % on the ambiguous ones, and it rarely chooses other. In the tested run, a notice of site closure went to info_request and a request for rates to sales_offer (10 of 12 right). Keep a person in the loop: the flow copies, it never deletes, moves or answers."
+  - "The model gives no reliable confidence score. What it cannot place, or places outside the six categories, goes to to_review; everything else is trusted as it is."
+  - "Summaries are asked in English; the small model sometimes answers in the language of the email (2 of 12 in the tested run)."
+  - "The sample reads emails saved as .txt files. Reading Outlook directly (Retrieve email messages) was not tested with this sample."
+  - "Tested on a PC without GPU, with llama3.2:3b. Other models only change the value of txt_Model; their speed and accuracy were not tested in PAD."
+
+pictures:
+  result: {file: assets/result.png, caption: "The message at the end of Main: the decision for each of the 12 sample emails"}
+  variables_pane: {file: assets/variables-pane.png, caption: "The function's Variables pane, section Local: Input 3, Output 8"}
+  canvas:
+    2-Triage_Email.txt: {file: assets/canvas.png, caption: "The function after the paste: the guard and the Invoke Local LLM action"}
+    1-Main.txt: {file: assets/canvas-main.png, caption: "Main after the paste: the settings to change"}
+  actions:
+    2-Triage_Email.txt:
+      - {file: assets/invoke-local-llm.png, caption: "Invoke Local LLM: the server, the model and the text of the email come from the inputs", width: 420}
+      - {file: assets/invoke-local-llm-advanced.png, caption: "Advanced: the instructions, temperature 0, a JSON answer, at most 200 tokens, 120 s", width: 420}
+
+apps: [Ollama (free, runs on the PC) with the model llama3.2:3b]
+
+prerequisites:
+  - title: Install Ollama and download the model, once
+    why: Every path asks a model that runs on this PC; the flow installs nothing.
+    how: "Install Ollama from ollama.com. In a command prompt, run: ollama pull llama3.2:3b (about 2 GB). Ollama then serves it at http://localhost:11434/v1, the value of txt_Endpoint."
+    picture: {file: assets/ollama-pull.png, caption: "The model downloaded once: the last line says success", width: 640}
+files:
+  - put: input/*
+    into: C:\Work\SharedInbox
+    note: Create the folder first. The flow creates C:\Work\SharedInbox\Triaged by itself and never changes the inbox.
+
+quick_try:
+  file: 3-Test.txt
+  minutes: 2
+  says: Four short emails (two in English, two in French) triaged in one block pasted into Main. No subflow, no input or output to create, no file.
+  files: false
+  apps: [Ollama with the model llama3.2:3b]
+  expect:
+    - "A message: 4 emails triaged in 38 s by llama3.2:3b, on this PC: no email was sent out. Then one line per email: invoice, complaint, appointment, sales_offer, with their urgency and a summary."
+  picture: {file: assets/quick-try-message.png, caption: The message at the end of the quick try}
+  option: "Change txt_Model in the first region to try another model you pulled (ollama pull <model>)."
+flow_name: Local AI email triage
+
+subflows:
+  1-Main.txt: {does: "Example call: reads each .txt email of the inbox, calls the function, copies the email into the folder of its category and writes a CSV report."}
+  2-Triage_Email.txt: {does: "The reusable part: the text of one email in, its category, urgency, summary, reply flag and 4 details out. Never stops the flow."}
+  3-Test.txt: {does: "The quick try: four emails written in the block, triaged by the same action and shown in one message.", optional: true}
+
+variables:
+  in_loc_txt_EmailText: {holds: "The text of the email: subject line, empty line, body", e.g: "Subject: Payment received, order 88213 ..."}
+  in_loc_txt_Endpoint: {holds: The Ollama endpoint on this PC, e.g: 'http://localhost:11434/v1'}
+  in_loc_txt_Model: {holds: "A model already pulled in Ollama", e.g: 'llama3.2:3b'}
+  out_loc_bool_Ok: {holds: True when the triage worked and the category is one of the six, e.g: 'True'}
+  out_loc_txt_Error: {holds: "Why it failed; empty when out_loc_bool_Ok is True", e.g: "No answer from the model llama3.2:3b at http://localhost:11434/v1. Is Ollama running, and was the model pulled?"}
+  out_loc_txt_Category: {holds: "One of invoice, complaint, info_request, appointment, sales_offer, other; empty when out_loc_bool_Ok is False", e.g: complaint}
+  out_loc_txt_Urgency: {holds: "low, normal or high", e.g: high}
+  out_loc_txt_Summary: {holds: One sentence written by the model, e.g: No update on standing desk order SD-55102 after three weeks}
+  out_loc_bool_ReplyNeeded: {holds: True when the sender expects an answer, e.g: 'True'}
+  out_loc_num_ElapsedMs: {holds: Time taken by the call to the model, e.g: '6300'}
+  out_loc_num_Tokens: {holds: Tokens read and written by the model, e.g: 'about 380'}
+
+run:
+  subflow: Main
+  expect:
+    - "A message: 12 emails triaged in about 160 s by llama3.2:3b on this PC, 0 to review, then one line per email with its category, urgency and summary."
+    - "C:\\Work\\SharedInbox\\Triaged holds one folder per category with a copy of each email, and triage-report.csv (identical decisions to expected/triage-report.csv)."
+  picture: {file: assets/result.png, caption: The message at the end of the run}
+  show_file: expected/triaged-tree.txt
+
+troubleshooting:
+  - when: "Every email lands in to_review with No answer from the model."
+    do: "Ollama is not running or the model is missing. Open a command prompt, run ollama list: the model of txt_Model must be listed. If not, run ollama pull llama3.2:3b."
+  - when: The first email takes 20 to 30 s, the next ones about 6 s.
+    do: Normal. The first call loads the model in memory; Ollama keeps it loaded for 5 minutes.
+  - when: The Errors pane lists unknown variables after the paste into the function.
+    do: A contract name differs from the table of the step that creates them. Fix the name in the Variables pane (capitals count); the errors disappear.
+  - when: The new subflow appears under Global, not Local.
+    do: The scope is easily lost while typing the name. Delete the subflow and create it again; check Local just before Save.
+
+tested:
+  - {pad: 2.72.183, date: 2026-10-01, path: Full flow, result: pass}
+  - {pad: 2.72.183, date: 2026-10-01, path: Quick try, result: pass}

@@ -42,3 +42,13 @@ desktop-ui-automation:
   label: Desktop UI automation
   title: Desktop UI automation with stable selectors
   summary: UI elements pasted with the code, selectors built on automation ids, a keyboard fallback where the screen resists.
+
+local-llm:
+  label: Local AI model
+  title: A language model served on the PC
+  summary: The Invoke Local LLM action calls a model that runs on the PC (Ollama), with no account and no key; the data never leaves the PC. Temperature 0 gives the same answer to the same text.
+
+json-by-regex:
+  label: JSON by regex
+  title: JSON answers read field by field
+  summary: Each field of a JSON answer is read with its own regular expression and checked against the allowed values, so a missing or unexpected field becomes a clear error instead of stopping the flow.
