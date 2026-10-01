@@ -42,11 +42,8 @@ theme:
 plugins:
   - search
 
-extra_css:
-  - assets/site.css
-
-extra_javascript:
-  - assets/gallery.js
+# extra_css and extra_javascript are written by tools/build_site.py in .site.yml: their file names carry a hash of
+# their content, so that a browser never keeps an older style or script after a publication
 
 markdown_extensions:
   - tables
