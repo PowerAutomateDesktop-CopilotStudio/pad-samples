@@ -6,9 +6,9 @@
 
 Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.
 
-**Reusable component** · Intermediate · Requires Microsoft Excel (desktop) · Tested on PAD 2.72.183 · v1.1.0
+**Reusable component** · Intermediate · Requires Microsoft Excel (desktop) · Tested on PAD 2.72.183 · v1.1.1
 
-[**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/anne-automates/pad-samples/releases/download/excel-range-to-html-table-v1.1.0/excel-range-to-html-table-v1.1.0.zip) · [Changelog](CHANGELOG.md)
+[**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/anne-automates/pad-samples/releases/download/excel-range-to-html-table-v1.1.1/excel-range-to-html-table-v1.1.1.zip) · [Changelog](CHANGELOG.md)
 
 *For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
 

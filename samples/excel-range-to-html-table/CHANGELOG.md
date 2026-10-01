@@ -1,5 +1,9 @@
 # Changelog - Excel range to an email-ready HTML table
 
+## 1.1.1 - 2026-10-01
+
+- The gallery card shows an illustration (`assets/cover.png`); the card names Anne among the authors; the pages follow the new layout of the lab (prerequisites, cards). The flow did not change: no new run needed.
+
 ## 1.1.0 - 2026-09-29
 
 - The quick try (`Test`) needs Excel only: the table opens in the browser. The Outlook email becomes an option, `bool_SendToOutlook` in the first region (`False` by default).

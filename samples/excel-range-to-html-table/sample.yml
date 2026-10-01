@@ -2,7 +2,7 @@
 # Everything the code already says (subflows, contract, UI elements, line counts, settings, regions) is NOT repeated here.
 # Quote any text that holds a comma inside { }.
 id: excel-range-to-html-table
-version: 1.1.0             # x.y.z : see CONTRIBUTING, section Versions
+version: 1.1.1             # x.y.z : see CONTRIBUTING, section Versions
 title: Excel range to an email-ready HTML table
 summary: Turn any Excel range into an HTML table that keeps its look (fills, fonts, borders, number formats), ready for an Outlook email.
 category: Excel
@@ -67,6 +67,7 @@ limits:
   - "A wide range gives a wide email: Excel's column widths are kept (952 px for the sample)."
 
 pictures:
+  cover: {file: assets/cover.png, caption: "Illustration: an Excel range and the same table in an email, same look"}
   before: {file: assets/before.png, caption: "The range in Excel: sheet Q3 Sales, A1:H19 (row 19 and column C are hidden)"}
   result: {file: assets/result.png, caption: "The HTML table returned by the function, same look"}
   variables_pane: {file: assets/variables-pane.png, caption: "The function's Variables pane, section Local: Input 3, Output 8"}

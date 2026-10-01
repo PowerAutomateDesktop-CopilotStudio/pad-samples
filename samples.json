@@ -7,8 +7,8 @@
       "category": "Excel",
       "kind": "component",
       "level": "intermediate",
-      "version": "1.1.0",
-      "released": "2026-09-29",
+      "version": "1.1.1",
+      "released": "2026-10-01",
       "techniques": [
         "local-function",
         "errors-as-outputs",
@@ -41,7 +41,8 @@
         }
       ],
       "page": "samples/excel-range-to-html-table/README.md",
-      "image": "samples/excel-range-to-html-table/assets/result.png"
+      "image": "samples/excel-range-to-html-table/assets/result.png",
+      "cover": "samples/excel-range-to-html-table/assets/cover.png"
     },
     {
       "id": "local-ai-email-triage",
@@ -50,7 +51,7 @@
       "category": "Email",
       "kind": "component",
       "level": "intermediate",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "released": "2026-10-01",
       "techniques": [
         "local-function",
@@ -60,8 +61,7 @@
         "trained-classifier"
       ],
       "requires": [
-        "Ollama (free",
-        "runs on the PC) with the model llama3.2:3b"
+        "Ollama (free, runs on the PC) with the model llama3.2:3b"
       ],
       "quick_try_minutes": 2,
       "setup_minutes": 20,
@@ -90,7 +90,8 @@
         }
       ],
       "page": "samples/local-ai-email-triage/README.md",
-      "image": "samples/local-ai-email-triage/assets/result.png"
+      "image": "samples/local-ai-email-triage/assets/result.png",
+      "cover": "samples/local-ai-email-triage/assets/cover.png"
     }
   ]
 }

@@ -6,9 +6,9 @@
 
 Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 
-**Reusable component** · Intermediate · Requires Ollama (free, runs on the PC) with the model llama3.2:3b · Tested on PAD 2.72.183 · v1.1.0
+**Reusable component** · Intermediate · Requires Ollama (free, runs on the PC) with the model llama3.2:3b · Tested on PAD 2.72.183 · v1.1.1
 
-[**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/anne-automates/pad-samples/releases/download/local-ai-email-triage-v1.1.0/local-ai-email-triage-v1.1.0.zip) · [Changelog](CHANGELOG.md)
+[**Step-by-step setup**](SETUP.md) · [Download the sample (zip)](https://github.com/anne-automates/pad-samples/releases/download/local-ai-email-triage-v1.1.1/local-ai-email-triage-v1.1.1.zip) · [Changelog](CHANGELOG.md)
 
 *For e-learning purposes only: try it in a test environment with the sample data, and review it before any real use. [Disclaimer](../../START-HERE.md#disclaimer)*
 

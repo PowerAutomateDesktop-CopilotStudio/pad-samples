@@ -1,5 +1,9 @@
 # Changelog - Email triage by a local AI model
 
+## 1.1.1 - 2026-10-01
+
+- The catalogue (`samples.json`) lists Ollama as one requirement instead of two pieces cut at a comma. The gallery card shows an illustration (`assets/cover.png`). Card only: the flow did not change, no new run needed.
+
 ## 1.1.0 - 2026-10-01
 
 - Optional: a classifier trained on emails a person already sorted, for 92 % right instead of 68 % (cross-validated on 192 fictitious emails). New section Make it more accurate, two optional subflows (`Classify_Email_Trained`, `Triage_Trained`), the scripts `train_triage.py` and `classify_triage.py`, and 180 sorted emails in `model/`. Nothing changes for the reader who keeps the language model.

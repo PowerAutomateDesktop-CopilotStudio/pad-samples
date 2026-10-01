@@ -2,7 +2,7 @@
 # Everything the code already says (subflows, contract, UI elements, line counts, settings, regions) is NOT repeated here.
 # Quote any text that holds a comma inside { }.
 id: local-ai-email-triage
-version: 1.1.0             # x.y.z : see CONTRIBUTING, section Versions
+version: 1.1.1             # x.y.z : see CONTRIBUTING, section Versions
 title: Email triage by a local AI model
 summary: Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.
 category: Email
@@ -87,6 +87,7 @@ limits:
   - "The trained classifier gives no urgency and no summary: only the category and its confidence. Use both functions when you need both."
 
 pictures:
+  cover: {file: assets/cover.png, caption: "Illustration: emails sorted on the PC by a local AI model, the doubtful ones to review"}
   result: {file: assets/result.png, caption: "The message at the end of Main: the decision for each of the 12 sample emails"}
   variables_pane: {file: assets/variables-pane.png, caption: "The function's Variables pane, section Local: Input 3, Output 8"}
   canvas:
@@ -98,7 +99,7 @@ pictures:
       - {file: assets/invoke-local-llm.png, caption: "Invoke Local LLM: the server, the model and the text of the email come from the inputs", width: 420}
       - {file: assets/invoke-local-llm-advanced.png, caption: "Advanced: the instructions, temperature 0, a JSON answer, at most 200 tokens, 120 s", width: 420}
 
-apps: [Ollama (free, runs on the PC) with the model llama3.2:3b]
+apps: ["Ollama (free, runs on the PC) with the model llama3.2:3b"]
 
 prerequisites:
   - title: Install Ollama and download the model, once
