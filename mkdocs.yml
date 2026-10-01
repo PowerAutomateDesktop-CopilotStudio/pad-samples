@@ -45,6 +45,9 @@ plugins:
 extra_css:
   - assets/site.css
 
+extra_javascript:
+  - assets/gallery.js
+
 markdown_extensions:
   - tables
   - attr_list

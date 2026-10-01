@@ -14,6 +14,8 @@ Every sample starts with the quickest way to see it work, then states the proble
 > [!TIP]
 > **Have an automation challenge?** [Submit it to Anne](https://github.com/anne-automates/anne-automates.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges. Private request: [LinkedIn](https://www.linkedin.com/in/franckmongo/).
 
+<!-- gallery:start -->
+
 **Categories:** [Excel](#excel) (1) · [Email](#email) (1)
 
 ## Excel
@@ -31,6 +33,8 @@ Outlook messages read, filed, drafted or sent.
 | | Sample | Techniques | Try it | Requires |
 |---|---|---|---|---|
 | <img src="samples/local-ai-email-triage/assets/result.png" width="150"> | **[Email triage by a local AI model](samples/local-ai-email-triage/README.md)**<br>Sort the emails of a shared inbox by category and urgency with a model that runs on the PC, each with a one-sentence summary; no email leaves the PC. Trained on your own sorted emails, it goes from 68 % to 92 % right.<br><sub>Reusable component · Intermediate · v1.1.0</sub> | Local function, Errors as outputs, Local AI model, JSON by regex, Trained classifier | 2 min, nothing to create | Ollama with the model llama3.2:3b |
+
+<!-- gallery:end -->
 
 ## What every sample gives you
 

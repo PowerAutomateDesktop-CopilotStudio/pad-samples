@@ -40,7 +40,8 @@
           "result": "pass"
         }
       ],
-      "page": "samples/excel-range-to-html-table/README.md"
+      "page": "samples/excel-range-to-html-table/README.md",
+      "image": "samples/excel-range-to-html-table/assets/result.png"
     },
     {
       "id": "local-ai-email-triage",
@@ -88,7 +89,8 @@
           "result": "pass"
         }
       ],
-      "page": "samples/local-ai-email-triage/README.md"
+      "page": "samples/local-ai-email-triage/README.md",
+      "image": "samples/local-ai-email-triage/assets/result.png"
     }
   ]
 }

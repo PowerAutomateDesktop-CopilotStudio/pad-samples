@@ -229,6 +229,9 @@ class Sample:
                 err.append(f"techniques: '{t}' is not in techniques.yml (add it there with a title and a summary)")
         if "result" not in self.pics:
             err.append("pictures: result is required")
+        cover = self.pics.get("cover")
+        if cover and not (isinstance(cover, dict) and cover.get("file") and (self.folder / cover["file"]).exists()):
+            err.append("pictures.cover: {file, caption}, an illustration for the gallery card; the file must exist")
         # the lowest step of the ladder: a component always offers one block that asks nothing
         q = c.get("quick_try")
         if c["kind"] == "component" and not q:
@@ -642,6 +645,8 @@ def gallery(samples, techniques, categories):
           "[Copilot Studio samples](https://anne-automates.github.io/copilot-studio-samples/)", "",
           "> [!IMPORTANT]", "> **For e-learning purposes.** The samples teach; they are not production-ready. Read the [disclaimer](START-HERE.md#disclaimer).", "",
           "> [!TIP]", "> **Have an automation challenge?** [Submit it to Anne](https://github.com/anne-automates/anne-automates.github.io/issues/new?template=submit-a-challenge.yml): the next samples come from your challenges. Private request: [LinkedIn](https://www.linkedin.com/in/franckmongo/).", "",]
+    # the website shows the samples between these two markers as cards, with a search box and filters (build_site.py)
+    md += ["<!-- gallery:start -->", ""]
     if len(cats) > 1:
         md += ["**Categories:** " + " · ".join(f"[{c}](#{anchor(c)}) ({len(by_cat[c])})" for c in cats), ""]
     if n > 3:
@@ -657,10 +662,12 @@ def gallery(samples, techniques, categories):
             tech = ", ".join(techniques[t].get("label", techniques[t]["title"]) for t in c["techniques"])
             first = s.ladder()[0]
             try_it = f"{first['minutes']} min, " + (", ".join(first["asks"]) if first["asks"] else "nothing to create")
-            md.append(f'| <img src="{rel}/{c["pictures"]["result"]["file"]}" width="150"> '
+            thumb = (c["pictures"].get("cover") or c["pictures"]["result"])["file"]   # the illustration when there is one
+            md.append(f'| <img src="{rel}/{thumb}" width="150"> '
                       f"| **[{c['title']}]({rel}/README.md)**<br>{c['summary']}<br><sub>{KIND[c['kind']]} · {c['level'].capitalize()} · v{s.version}</sub> "
                       f"| {tech} | {try_it} | {s.requires((c.get('quick_try') or {}).get('apps'))} |")
         md.append("")
+    md += ["<!-- gallery:end -->", ""]
     md += ["## What every sample gives you", "",
            "| Overview (`README.md`) | Setup (`SETUP.md`) |", "|---|---|",
            "| Try it · Problem · Solution · Use it in your flow · How it works · Design choices · Performance · Limits · Files · Tested on "
@@ -679,7 +686,9 @@ def catalogue(samples):
                     "level": c["level"], "version": s.version, "released": released(s), "techniques": c["techniques"],
                     "requires": c.get("apps") or [], "quick_try_minutes": first["minutes"] if first["id"] == "quick" else None,
                     "setup_minutes": c["minutes"], "subflows": len(s.required), "inputs": s.n_in, "outputs": s.n_out,
-                    "ui_elements": len(s.ui), "tested": c["tested"], "page": f"samples/{s.folder.name}/README.md"})
+                    "ui_elements": len(s.ui), "tested": c["tested"], "page": f"samples/{s.folder.name}/README.md",
+                    "image": f"samples/{s.folder.name}/{c['pictures']['result']['file']}",
+                    **({"cover": f"samples/{s.folder.name}/{c['pictures']['cover']['file']}"} if c["pictures"].get("cover") else {})})
     return json.dumps({"samples": out}, indent=2, ensure_ascii=False, default=str) + "\n"
 
 
